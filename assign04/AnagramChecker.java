@@ -9,8 +9,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Provides methods to check for anagrams and find the largest
+ * group of anagrams in a list of words or in a text file.
+ */
 public class AnagramChecker {
 
+    /**
+     * Main method that reads words from the default file
+     * and prints the largest group of anagrams found.
+     *
+     * @param args command line arguments (not used)
+     */
     public static void main(String[] args) {
         String filepath = "./anagramFile.txt";
         String[] largestAnagramGroup = getLargestAnagramGroup(filepath);
@@ -25,6 +35,13 @@ public class AnagramChecker {
         }
     }
 
+    /**
+     * Returns a new string with the letters of the input
+     * string arranged in alphabetical order.
+     *
+     * @param s the string to sort
+     * @return the sorted string
+     */
     public static String sort(String s) {
         Character[] chars = new Character[s.length()];
         for (int i = 0; i < s.length(); i++) {
@@ -40,11 +57,18 @@ public class AnagramChecker {
         return sb.toString();
     }
 
+    /**
+     * Sorts the given array in place using insertion sort
+     * and the provided comparator.
+     *
+     * @param arr the array to sort
+     * @param cmp the comparator to decide order
+     * @param <T> the type of elements in the array
+     */
     public static <T> void insertionSort(T[] arr, Comparator<? super T> cmp) {
         for (int i = 1; i < arr.length; i++) {
             T key = arr[i];
             int j = i - 1;
-            // Shift larger elements to the right
             while (j >= 0 && cmp.compare(arr[j], key) > 0) {
                 arr[j + 1] = arr[j];
                 j--;
@@ -53,6 +77,13 @@ public class AnagramChecker {
         }
     }
 
+    /**
+     * Checks whether two strings are anagrams of each other.
+     *
+     * @param str1 the first string
+     * @param str2 the second string
+     * @return true if the strings are anagrams, false otherwise
+     */
     public static boolean areAnagrams(String str1, String str2) {
         if (str1.length() != str2.length()) {
             return false;
@@ -61,6 +92,14 @@ public class AnagramChecker {
         return sort(str1).equals(sort(str2));
     }
 
+    /**
+     * Finds the largest group of words that are anagrams
+     * from a list of words.
+     *
+     * @param words list of words to check
+     * @return the largest anagram group as an array,
+     *         or null if none found
+     */
     private static String[] findLargestAnagramGroup(List<String> words) {
         Map<String, List<String>> anagramGroups = new HashMap<>();
 
@@ -69,7 +108,6 @@ public class AnagramChecker {
             anagramGroups.computeIfAbsent(sorted, k -> new ArrayList<>()).add(str);
         }
 
-        // Find the largest anagram group
         List<String> largestGroup = null;
         for (List<String> group : anagramGroups.values()) {
             if (largestGroup == null || group.size() > largestGroup.size()) {
@@ -80,11 +118,27 @@ public class AnagramChecker {
         return largestGroup != null ? largestGroup.toArray(String[]::new) : null;
     }
 
+    /**
+     * Finds the largest anagram group in an array of words.
+     *
+     * @param inputArr array of words
+     * @return the largest anagram group as an array,
+     *         or null if none found
+     */
     public static String[] getLargestAnagramGroup(String[] inputArr) {
         List<String> words = List.of(inputArr);
         return findLargestAnagramGroup(words);
     }
 
+    /**
+     * Reads a file and returns the largest group of anagrams
+     * found in the file. Words in the file should be separated
+     * by commas and spaces.
+     *
+     * @param filepath the path to the input file
+     * @return the largest anagram group as an array,
+     *         or null if none found or an error occurs
+     */
     public static String[] getLargestAnagramGroup(String filepath) {
         List<String> words = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(filepath))) {
