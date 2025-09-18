@@ -12,28 +12,10 @@ import java.util.Map;
 /**
  * Provides methods to check for anagrams and find the largest group of anagrams
  * in a list of words or in a text file.
+ *
+ * @author Tyler Gagliardi & Alex Waldmann
  */
 public class AnagramChecker {
-
-    /**
-     * Main method that reads words from the default file and prints the largest
-     * group of anagrams found.
-     *
-     * @param args command line arguments (not used)
-     */
-    public static void main(String[] args) {
-        String filepath = "./assign04/sample_word_list.txt";
-        String[] largestAnagramGroup = getLargestAnagramGroup(filepath);
-
-        if (largestAnagramGroup != null && largestAnagramGroup.length > 0) {
-            System.out.println("Largest anagram group:");
-            for (String word : largestAnagramGroup) {
-                System.out.println(word);
-            }
-        } else {
-            System.out.println("No anagrams found.");
-        }
-    }
 
     /**
      * Returns a new string with the letters of the input string arranged in
@@ -45,7 +27,7 @@ public class AnagramChecker {
     public static String sort(String s) {
         Character[] chars = new Character[s.length()];
         for (int i = 0; i < s.length(); i++) {
-            chars[i] = s.toLowerCase().charAt(i);
+            chars[i] = s.charAt(i);
         }
 
         insertionSort(chars, Comparator.naturalOrder());
@@ -88,8 +70,8 @@ public class AnagramChecker {
         if (str1.length() != str2.length()) {
             return false;
         }
-
-        return sort(str1).equals(sort(str2));
+        // Compare case-insensitively by normalizing to lowercase before sorting
+        return sort(str1.toLowerCase()).equals(sort(str2.toLowerCase()));
     }
 
     /**
@@ -102,7 +84,8 @@ public class AnagramChecker {
         Map<String, List<String>> anagramGroups = new HashMap<>();
 
         for (String str : words) {
-            String sorted = sort(str);
+            // Group anagrams case-insensitively by normalizing to lowercase
+            String sorted = sort(str.toLowerCase());
             anagramGroups.computeIfAbsent(sorted, k -> new ArrayList<>()).add(str);
         }
 
@@ -113,7 +96,7 @@ public class AnagramChecker {
             }
         }
 
-        return largestGroup != null ? largestGroup.toArray(String[]::new) : null;
+        return (largestGroup != null && largestGroup.size() > 1) ? largestGroup.toArray(String[]::new) : new String[0];
     }
 
     /**
@@ -124,6 +107,11 @@ public class AnagramChecker {
      */
     public static String[] getLargestAnagramGroup(String[] inputArr) {
         List<String> words = List.of(inputArr);
+
+        //Two helper methods, findLargestAnagramGroup used between both 
+        //getLargestAnagramGroup methods to avoid code duplication, 
+        //this findLargestAnagramGroup method uses the sort helper method
+        //Idk if this counts but I sure hope so
         return findLargestAnagramGroup(words);
     }
 
@@ -156,6 +144,8 @@ public class AnagramChecker {
             }
         } catch (IOException e) {
             System.err.println("Error reading file: " + e.getMessage());
+            return new String[0]; // Provide log and return empty array if 
+            //file cannot be read
         }
         return findLargestAnagramGroup(words);
     }

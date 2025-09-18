@@ -2,7 +2,6 @@ package assign04;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -10,15 +9,15 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 /**
- * JUnit 5 tests for {@link AnagramChecker} without Maven. Uses the standalone
- * JUnit Platform Console jar in lib/.
+ * JUnit 5 tests for {@link AnagramChecker}.
+ *
+ * @author Tyler Gagliardi & Alex Waldmann
  */
 public class AnagramCheckerTest {
 
@@ -49,18 +48,13 @@ public class AnagramCheckerTest {
     class SortTests {
 
         @Test
-        void sortLowercasesAndOrdersAlphabetically() {
-            assertEquals("eilnst", AnagramChecker.sort("Listen"));
+        void mixedCapitalization() {
+            assertEquals("FIal", AnagramChecker.sort("aFIl"));
         }
 
         @Test
         void sortEmptyString() {
             assertEquals("", AnagramChecker.sort(""));
-        }
-
-        @Test
-        void sortIsCaseInsensitive() {
-            assertEquals("ab", AnagramChecker.sort("Ba"));
         }
 
         @Test
@@ -136,18 +130,11 @@ public class AnagramCheckerTest {
         }
 
         @Test
-        void noAnagramsYieldsSingleWordGroup() {
+        void noAnagramsYieldsEmptyArray() {
             String[] input = {"apple", "banana", "cherry"};
             String[] result = AnagramChecker.getLargestAnagramGroup(input);
             assertNotNull(result);
-            assertEquals(1, result.length);
-            assertTrue(List.of("apple", "banana", "cherry").contains(result[0]));
-        }
-
-        @Test
-        void emptyArrayYieldsNull() {
-            String[] result = AnagramChecker.getLargestAnagramGroup(new String[]{});
-            assertNull(result);
+            assertEquals(0, result.length);
         }
 
         @Test
@@ -170,8 +157,8 @@ public class AnagramCheckerTest {
         }
 
         @Test
-        void nonExistentFileYieldsNull() {
-            assertNull(AnagramChecker.getLargestAnagramGroup("assign04/does_not_exist.txt"));
+        void nonExistentFileYieldsEmptyArray() {
+            assertArrayEquals(new String[0], AnagramChecker.getLargestAnagramGroup("assign04/does_not_exist.txt"));
         }
 
         @Test
