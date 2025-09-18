@@ -10,19 +10,19 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Provides methods to check for anagrams and find the largest
- * group of anagrams in a list of words or in a text file.
+ * Provides methods to check for anagrams and find the largest group of anagrams
+ * in a list of words or in a text file.
  */
 public class AnagramChecker {
 
     /**
-     * Main method that reads words from the default file
-     * and prints the largest group of anagrams found.
+     * Main method that reads words from the default file and prints the largest
+     * group of anagrams found.
      *
      * @param args command line arguments (not used)
      */
     public static void main(String[] args) {
-        String filepath = "./anagramFile.txt";
+        String filepath = "./assign04/sample_word_list.txt";
         String[] largestAnagramGroup = getLargestAnagramGroup(filepath);
 
         if (largestAnagramGroup != null && largestAnagramGroup.length > 0) {
@@ -36,8 +36,8 @@ public class AnagramChecker {
     }
 
     /**
-     * Returns a new string with the letters of the input
-     * string arranged in alphabetical order.
+     * Returns a new string with the letters of the input string arranged in
+     * alphabetical order.
      *
      * @param s the string to sort
      * @return the sorted string
@@ -45,7 +45,7 @@ public class AnagramChecker {
     public static String sort(String s) {
         Character[] chars = new Character[s.length()];
         for (int i = 0; i < s.length(); i++) {
-            chars[i] = s.charAt(i);
+            chars[i] = s.toLowerCase().charAt(i);
         }
 
         insertionSort(chars, Comparator.naturalOrder());
@@ -58,8 +58,8 @@ public class AnagramChecker {
     }
 
     /**
-     * Sorts the given array in place using insertion sort
-     * and the provided comparator.
+     * Sorts the given array in place using insertion sort and the provided
+     * comparator.
      *
      * @param arr the array to sort
      * @param cmp the comparator to decide order
@@ -93,12 +93,10 @@ public class AnagramChecker {
     }
 
     /**
-     * Finds the largest group of words that are anagrams
-     * from a list of words.
+     * Finds the largest group of words that are anagrams from a list of words.
      *
      * @param words list of words to check
-     * @return the largest anagram group as an array,
-     *         or null if none found
+     * @return the largest anagram group as a string array, or [] if none found
      */
     private static String[] findLargestAnagramGroup(List<String> words) {
         Map<String, List<String>> anagramGroups = new HashMap<>();
@@ -122,8 +120,7 @@ public class AnagramChecker {
      * Finds the largest anagram group in an array of words.
      *
      * @param inputArr array of words
-     * @return the largest anagram group as an array,
-     *         or null if none found
+     * @return the largest anagram group in a string array, or [] if none found
      */
     public static String[] getLargestAnagramGroup(String[] inputArr) {
         List<String> words = List.of(inputArr);
@@ -131,13 +128,12 @@ public class AnagramChecker {
     }
 
     /**
-     * Reads a file and returns the largest group of anagrams
-     * found in the file. Words in the file should be separated
-     * by commas and spaces.
+     * Reads a file and returns the largest group of anagrams found in the file.
+     * Words in the file should be separated by commas and spaces.
      *
      * @param filepath the path to the input file
-     * @return the largest anagram group as an array,
-     *         or null if none found or an error occurs
+     * @return the largest anagram group in a string array, or [] if none found
+     * or an error occurs
      */
     public static String[] getLargestAnagramGroup(String filepath) {
         List<String> words = new ArrayList<>();
