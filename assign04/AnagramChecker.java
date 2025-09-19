@@ -4,10 +4,12 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Provides methods to check for anagrams and find the largest group of anagrams
@@ -17,6 +19,15 @@ import java.util.Map;
  */
 public class AnagramChecker {
 
+    public static void main(String[] args) {
+        System.out.println(sort("aFIl"));
+        System.out.println(sort("FIal"));
+        System.out.println(areAnagrams("listen", "silent")); // true
+        System.out.println(areAnagrams("hello", "world"));   // false
+        String[] words = {"listen", "silent", "enlist", "inlets", "google", "gooogle"};
+        System.out.println(Arrays.toString(getLargestAnagramGroup(words))); // [listen, silent, enlist, inlets]
+    }
+
     /**
      * Returns a new string with the letters of the input string arranged in
      * alphabetical order.
@@ -25,18 +36,15 @@ public class AnagramChecker {
      * @return the sorted string
      */
     public static String sort(String s) {
-        Character[] chars = new Character[s.length()];
-        for (int i = 0; i < s.length(); i++) {
-            chars[i] = s.charAt(i);
-        }
+        //Convert string to Character array for sorting
+        //Map to Character[]
+        Character[] chars = s.chars().mapToObj((c) -> (char) c).toArray(Character[]::new);
 
+        //Sort
         insertionSort(chars, Comparator.naturalOrder());
 
-        StringBuilder sb = new StringBuilder(chars.length);
-        for (Character c : chars) {
-            sb.append(c.charValue());
-        }
-        return sb.toString();
+        //Convert back to String
+        return Arrays.stream(chars).map(String::valueOf).collect(Collectors.joining());
     }
 
     /**
