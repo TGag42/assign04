@@ -19,15 +19,6 @@ import java.util.stream.Collectors;
  */
 public class AnagramChecker {
 
-    public static void main(String[] args) {
-        System.out.println(sort("aFIl"));
-        System.out.println(sort("FIal"));
-        System.out.println(areAnagrams("listen", "silent")); // true
-        System.out.println(areAnagrams("hello", "world"));   // false
-        String[] words = {"listen", "silent", "enlist", "inlets", "google", "gooogle"};
-        System.out.println(Arrays.toString(getLargestAnagramGroup(words))); // [listen, silent, enlist, inlets]
-    }
-
     /**
      * Returns a new string with the letters of the input string arranged in
      * alphabetical order.
