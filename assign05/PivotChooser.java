@@ -1,6 +1,7 @@
 package assign05;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -37,35 +38,37 @@ public class PivotChooser<E extends Comparable<? super E>> {
             return 0;
         } else if (list.size() < 5) {
             //If list length is less than 5, return median of first, middle, last
-            E farLeftItem = list.get(leftIndex);
-            E farRightItem = list.get(rightIndex);
-            E middleItem = list.get((leftIndex + rightIndex) >>> 1);
+            PivotItemWithIndex<E> farLeftItem = new PivotItemWithIndex<>(list.get(leftIndex), leftIndex);
+            PivotItemWithIndex<E> farRightItem = new PivotItemWithIndex<>(list.get(rightIndex), rightIndex);
+            PivotItemWithIndex<E> middleItem = new PivotItemWithIndex<>(list.get((leftIndex + rightIndex) >>> 1), (leftIndex + rightIndex) >>> 1);
 
-            ArrayList<E> optionsList = new ArrayList<>();
+            ArrayList<PivotItemWithIndex<E>> optionsList = new ArrayList<>();
             optionsList.add(farLeftItem);
             optionsList.add(middleItem);
             optionsList.add(farRightItem);
 
-            optionsList.sort(E::compareTo);
-            E median = optionsList.get(1);
+            optionsList.sort(Comparator.comparing(PivotItemWithIndex::getItem));
+            PivotItemWithIndex<E> median = optionsList.get(1);
 
-            return list.indexOf(median);
+            return median.getIndex();
         } else {
             //If larger than 5, get a larger sample size to find better median
-            E farLeftItem = list.get(leftIndex);
-            E farRightItem = list.get(rightIndex);
-            E middleItem = list.get((leftIndex + rightIndex) >>> 1);
+            PivotItemWithIndex<E> farLeftItem = new PivotItemWithIndex<>(list.get(leftIndex), leftIndex);
+            PivotItemWithIndex<E> farRightItem = new PivotItemWithIndex<>(list.get(rightIndex), rightIndex);
+            PivotItemWithIndex<E> middleItem = new PivotItemWithIndex<>(list.get((leftIndex + rightIndex) >>> 1), (leftIndex + rightIndex) >>> 1);
 
             //Get random index from left half (might have an index out of bounds exception need to test)
-            E randomLeftItem = list.get(leftIndex + (int) (Math.random() * (rightIndex - ((leftIndex + rightIndex) >>> 1))));
+            int leftRandomIndex = leftIndex + (int) (Math.random() * (rightIndex - ((leftIndex + rightIndex) >>> 1)));
+            PivotItemWithIndex<E> randomLeftItem = new PivotItemWithIndex<>(list.get(leftRandomIndex), leftRandomIndex);
             //Get random index from right half (bitwise is absolutley disgusting but actually so smart
             //8 is binary 1000, 4 is binary 0100, bitshifting one right will give us the int / 2 but
             //also absolutley disgusting and only works with positive integers, but because index is
             //always positive it works here and avoids overflow)
-            E randomRightItem = list.get(((leftIndex + rightIndex) >>> 1) + (int) (Math.random() * (rightIndex - ((leftIndex + rightIndex) >>> 1))));
+            int rightRandomIndex = ((leftIndex + rightIndex) >>> 1) + (int) (Math.random() * (rightIndex - ((leftIndex + rightIndex) >>> 1)));
+            PivotItemWithIndex<E> randomRightItem = new PivotItemWithIndex<>(list.get(rightRandomIndex), rightRandomIndex);
 
             //Create a list of options
-            ArrayList<E> optionsList = new ArrayList<>();
+            ArrayList<PivotItemWithIndex<E>> optionsList = new ArrayList<>();
             optionsList.add(farLeftItem);
             optionsList.add(middleItem);
             optionsList.add(farRightItem);
@@ -73,10 +76,29 @@ public class PivotChooser<E extends Comparable<? super E>> {
             optionsList.add(randomRightItem);
 
             //Sort and get object so then we can return index from original list
-            optionsList.sort(E::compareTo);
-            E median = optionsList.get(2);
+            optionsList.sort(Comparator.comparing(PivotItemWithIndex::getItem));
+            PivotItemWithIndex<E> median = optionsList.get(2);
 
-            return list.indexOf(median);
+            return median.getIndex();
         }
+    }
+}
+
+class PivotItemWithIndex<E> {
+
+    E item;
+    int index;
+
+    PivotItemWithIndex(E item, int index) {
+        this.item = item;
+        this.index = index;
+    }
+
+    public E getItem() {
+        return item;
+    }
+
+    public int getIndex() {
+        return index;
     }
 }

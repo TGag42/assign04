@@ -199,8 +199,9 @@ public class ListSorterTimingExperiment {
         System.out.println("=== ListSorter Timing Experiments ===\n");
 
         // Common parameters
-        List<Integer> problemSizes = buildProblemSizes(1000, 2000, 15);
+        List<Integer> problemSizes = buildProblemSizes(0, 20000, 21);
         int iterationCount = 25;
+        int warmupIterations = 5;
 
         // Test 1: Mergesort with different thresholds on random data
         System.out.println("1. Mergesort Threshold Comparison (Random Data):");
@@ -208,7 +209,7 @@ public class ListSorterTimingExperiment {
         TimingExperiment mergeThreshold5 = new MergesortTimingExperiment(
                 "Mergesort (threshold=5)", problemSizes, iterationCount, 5,
                 MergesortTimingExperiment.DataPattern.RANDOM);
-        mergeThreshold5.warmup(3);
+        mergeThreshold5.warmup(warmupIterations);
         mergeThreshold5.run();
         mergeThreshold5.print();
 
@@ -217,7 +218,7 @@ public class ListSorterTimingExperiment {
         TimingExperiment mergeThreshold20 = new MergesortTimingExperiment(
                 "Mergesort (threshold=20)", problemSizes, iterationCount, 20,
                 MergesortTimingExperiment.DataPattern.RANDOM);
-        mergeThreshold20.warmup(3);
+        mergeThreshold20.warmup(warmupIterations);
         mergeThreshold20.run();
         mergeThreshold20.print();
 
@@ -229,7 +230,7 @@ public class ListSorterTimingExperiment {
         TimingExperiment quickRandom = new QuicksortTimingExperiment(
                 "Quicksort (Random)", problemSizes, iterationCount,
                 QuicksortTimingExperiment.DataPattern.RANDOM);
-        quickRandom.warmup(3);
+        quickRandom.warmup(warmupIterations);
         quickRandom.run();
         quickRandom.print();
 
@@ -238,7 +239,7 @@ public class ListSorterTimingExperiment {
         TimingExperiment quickSorted = new QuicksortTimingExperiment(
                 "Quicksort (Already Sorted)", problemSizes, iterationCount,
                 QuicksortTimingExperiment.DataPattern.SORTED);
-        quickSorted.warmup(3);
+        quickSorted.warmup(warmupIterations);
         quickSorted.run();
         quickSorted.print();
 
@@ -249,7 +250,7 @@ public class ListSorterTimingExperiment {
 
         TimingExperiment mergeComparison = new SortComparisonExperiment(
                 "Mergesort (Random)", problemSizes, iterationCount, true);
-        mergeComparison.warmup(3);
+        mergeComparison.warmup(warmupIterations);
         mergeComparison.run();
         mergeComparison.print();
 
@@ -257,7 +258,7 @@ public class ListSorterTimingExperiment {
 
         TimingExperiment quickComparison = new SortComparisonExperiment(
                 "Quicksort (Random)", problemSizes, iterationCount, false);
-        quickComparison.warmup(3);
+        quickComparison.warmup(warmupIterations);
         quickComparison.run();
         quickComparison.print();
 
@@ -270,7 +271,7 @@ public class ListSorterTimingExperiment {
         TimingExperiment mergeBest = new MergesortTimingExperiment(
                 "Mergesort (Mostly Sorted)", problemSizes, iterationCount, 10,
                 MergesortTimingExperiment.DataPattern.MOSTLY_SORTED);
-        mergeBest.warmup(3);
+        mergeBest.warmup(warmupIterations);
         mergeBest.run();
         mergeBest.print();
 
@@ -280,7 +281,7 @@ public class ListSorterTimingExperiment {
         TimingExperiment quickWorst = new QuicksortTimingExperiment(
                 "Quicksort (Reverse Sorted)", problemSizes, iterationCount,
                 QuicksortTimingExperiment.DataPattern.REVERSE_SORTED);
-        quickWorst.warmup(3);
+        quickWorst.warmup(warmupIterations);
         quickWorst.run();
         quickWorst.print();
 
