@@ -9,6 +9,9 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Test to isolate the quicksort duplicate handling bug
+ *
+ * @author Alex Waldmann
+ * @version 1.0 | October 2nd, 2025 (Up-to-date)
  */
 public class QuicksortDuplicateBugTest {
 
@@ -24,7 +27,7 @@ public class QuicksortDuplicateBugTest {
 
         System.out.println("Original list: " + list);
 
-        PivotChooser<Integer> chooser = new PivotChooser<>();
+        PivotChooser<Integer> chooser = new MedianOfFivePivotChooser<>();
         ListSorter.quicksort(list, chooser);
 
         System.out.println("Sorted list: " + list);
@@ -45,7 +48,7 @@ public class QuicksortDuplicateBugTest {
 
         System.out.println("Original all-same list: " + list);
 
-        PivotChooser<Integer> chooser = new PivotChooser<>();
+        PivotChooser<Integer> chooser = new MedianOfFivePivotChooser<>();
         ListSorter.quicksort(list, chooser);
 
         System.out.println("Sorted all-same list: " + list);
@@ -73,7 +76,7 @@ public class QuicksortDuplicateBugTest {
 
         System.out.println("Original pattern: " + list);
 
-        PivotChooser<Integer> chooser = new PivotChooser<>();
+        PivotChooser<Integer> chooser = new MedianOfFivePivotChooser<>();
         ListSorter.quicksort(list, chooser);
 
         System.out.println("Sorted pattern: " + list);

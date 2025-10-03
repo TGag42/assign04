@@ -12,7 +12,7 @@ import timing.TimingExperiment;
  * implementations. Tests performance across different data patterns and sizes.
  *
  * @author Alex Waldmann && Tyler Gagliardi
- * @version October 2, 2025
+ * @version 1.0 | October 2nd, 2025 (Up-to-date)
  */
 public class ListSorterTimingExperiment {
 
@@ -103,7 +103,7 @@ public class ListSorterTimingExperiment {
         public QuicksortTimingExperiment(String problemSizeName, List<Integer> problemSizes,
                 int iterationCount, DataPattern pattern) {
             super(problemSizeName, problemSizes, iterationCount);
-            this.pivotChooser = new PivotChooser<>();
+            this.pivotChooser = new MedianOfFivePivotChooser<>();
             this.pattern = pattern;
         }
 
@@ -170,7 +170,7 @@ public class ListSorterTimingExperiment {
         public SortComparisonExperiment(String problemSizeName, List<Integer> problemSizes,
                 int iterationCount, boolean testMergesort) {
             super(problemSizeName, problemSizes, iterationCount);
-            this.pivotChooser = new PivotChooser<>();
+            this.pivotChooser = new MedianOfFivePivotChooser<>();
             this.testMergesort = testMergesort;
         }
 

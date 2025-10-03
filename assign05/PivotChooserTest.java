@@ -13,8 +13,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Comprehensive test suite for PivotChooser implementation.
  *
- * @author Alex Waldmann
- * @version October 2, 2025
+ * @author Alex Waldmann && Tyler Gagliardi
+ * @version 1.0 | October 2nd, 2025 (Up-to-date)
  */
 public class PivotChooserTest {
 
@@ -22,14 +22,14 @@ public class PivotChooserTest {
 
     @BeforeEach
     void setUp() {
-        pivotChooser = new PivotChooser<>();
+        pivotChooser = new MedianOfFivePivotChooser<>();
     }
 
     // ===== EXCEPTION TESTS =====
     @Test
     void testNullList() {
         assertThrows(IllegalArgumentException.class, () -> {
-            pivotChooser.choosePivotIndex(null, 0, 0);
+            pivotChooser.getPivotIndex(null, 0, 0);
         });
     }
 
@@ -37,7 +37,7 @@ public class PivotChooserTest {
     void testEmptyList() {
         List<Integer> emptyList = new ArrayList<>();
         assertThrows(IllegalArgumentException.class, () -> {
-            pivotChooser.choosePivotIndex(emptyList, 0, 0);
+            pivotChooser.getPivotIndex(emptyList, 0, 0);
         });
     }
 
@@ -45,7 +45,7 @@ public class PivotChooserTest {
     void testInvalidLeftIndex() {
         List<Integer> list = Arrays.asList(1, 2, 3, 4, 5);
         assertThrows(IllegalArgumentException.class, () -> {
-            pivotChooser.choosePivotIndex(list, -1, 4);
+            pivotChooser.getPivotIndex(list, -1, 4);
         });
     }
 
@@ -53,7 +53,7 @@ public class PivotChooserTest {
     void testInvalidRightIndex() {
         List<Integer> list = Arrays.asList(1, 2, 3, 4, 5);
         assertThrows(IllegalArgumentException.class, () -> {
-            pivotChooser.choosePivotIndex(list, 0, 5);
+            pivotChooser.getPivotIndex(list, 0, 5);
         });
     }
 
@@ -61,7 +61,7 @@ public class PivotChooserTest {
     void testLeftGreaterThanRight() {
         List<Integer> list = Arrays.asList(1, 2, 3, 4, 5);
         assertThrows(IllegalArgumentException.class, () -> {
-            pivotChooser.choosePivotIndex(list, 3, 1);
+            pivotChooser.getPivotIndex(list, 3, 1);
         });
     }
 
@@ -69,7 +69,7 @@ public class PivotChooserTest {
     @Test
     void testSingleElementList() {
         List<Integer> list = Arrays.asList(42);
-        int pivotIndex = pivotChooser.choosePivotIndex(list, 0, 0);
+        int pivotIndex = pivotChooser.getPivotIndex(list, 0, 0);
         assertEquals(0, pivotIndex);
     }
 
@@ -77,7 +77,7 @@ public class PivotChooserTest {
     @Test
     void testTwoElementList() {
         List<Integer> list = Arrays.asList(3, 1);
-        int pivotIndex = pivotChooser.choosePivotIndex(list, 0, 1);
+        int pivotIndex = pivotChooser.getPivotIndex(list, 0, 1);
         // Should return index of median of {3, 1, 1} -> 1 appears twice, so index of first 1
         assertTrue(pivotIndex >= 0 && pivotIndex <= 1);
     }
@@ -85,7 +85,7 @@ public class PivotChooserTest {
     @Test
     void testThreeElementList() {
         List<Integer> list = Arrays.asList(1, 3, 2);
-        int pivotIndex = pivotChooser.choosePivotIndex(list, 0, 2);
+        int pivotIndex = pivotChooser.getPivotIndex(list, 0, 2);
         // Median of {1, 2, 3} is 2, which is at index 2
         assertTrue(pivotIndex >= 0 && pivotIndex <= 2);
 
@@ -97,7 +97,7 @@ public class PivotChooserTest {
     @Test
     void testFourElementList() {
         List<Integer> list = Arrays.asList(4, 1, 3, 2);
-        int pivotIndex = pivotChooser.choosePivotIndex(list, 0, 3);
+        int pivotIndex = pivotChooser.getPivotIndex(list, 0, 3);
         // Should use median-of-three: first(4), middle(3), last(2) -> median is 3
         assertTrue(pivotIndex >= 0 && pivotIndex <= 3);
     }
@@ -106,7 +106,7 @@ public class PivotChooserTest {
     @Test
     void testFiveElementList() {
         List<Integer> list = Arrays.asList(5, 1, 4, 2, 3);
-        int pivotIndex = pivotChooser.choosePivotIndex(list, 0, 4);
+        int pivotIndex = pivotChooser.getPivotIndex(list, 0, 4);
         // Should use 5-element sampling strategy
         assertTrue(pivotIndex >= 0 && pivotIndex <= 4);
 
@@ -118,7 +118,7 @@ public class PivotChooserTest {
     @Test
     void testLargerList() {
         List<Integer> list = Arrays.asList(10, 7, 8, 9, 1, 5, 6, 4, 2, 3);
-        int pivotIndex = pivotChooser.choosePivotIndex(list, 0, 9);
+        int pivotIndex = pivotChooser.getPivotIndex(list, 0, 9);
 
         // Verify bounds
         assertTrue(pivotIndex >= 0 && pivotIndex <= 9);
@@ -133,7 +133,7 @@ public class PivotChooserTest {
     void testSubrangeSmall() {
         List<Integer> list = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
         // Test subrange [2, 5] = {3, 4, 5, 6}
-        int pivotIndex = pivotChooser.choosePivotIndex(list, 2, 5);
+        int pivotIndex = pivotChooser.getPivotIndex(list, 2, 5);
 
         // Pivot should be within the specified range
         assertTrue(pivotIndex >= 2 && pivotIndex <= 5);
@@ -143,7 +143,7 @@ public class PivotChooserTest {
     void testSubrangeLarge() {
         List<Integer> list = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
         // Test subrange [3, 12] = {4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
-        int pivotIndex = pivotChooser.choosePivotIndex(list, 3, 12);
+        int pivotIndex = pivotChooser.getPivotIndex(list, 3, 12);
 
         // Pivot should be within the specified range
         assertTrue(pivotIndex >= 3 && pivotIndex <= 12);
@@ -153,7 +153,7 @@ public class PivotChooserTest {
     @Test
     void testAllSameValues() {
         List<Integer> list = Arrays.asList(5, 5, 5, 5, 5);
-        int pivotIndex = pivotChooser.choosePivotIndex(list, 0, 4);
+        int pivotIndex = pivotChooser.getPivotIndex(list, 0, 4);
 
         // Any index should be valid since all values are the same
         assertTrue(pivotIndex >= 0 && pivotIndex <= 4);
@@ -163,7 +163,7 @@ public class PivotChooserTest {
     @Test
     void testMostlyDuplicates() {
         List<Integer> list = Arrays.asList(1, 5, 5, 5, 9);
-        int pivotIndex = pivotChooser.choosePivotIndex(list, 0, 4);
+        int pivotIndex = pivotChooser.getPivotIndex(list, 0, 4);
 
         assertTrue(pivotIndex >= 0 && pivotIndex <= 4);
         Integer chosenPivot = list.get(pivotIndex);
@@ -174,7 +174,7 @@ public class PivotChooserTest {
     @Test
     void testSortedList() {
         List<Integer> list = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-        int pivotIndex = pivotChooser.choosePivotIndex(list, 0, 9);
+        int pivotIndex = pivotChooser.getPivotIndex(list, 0, 9);
 
         assertTrue(pivotIndex >= 0 && pivotIndex <= 9);
 
@@ -186,7 +186,7 @@ public class PivotChooserTest {
     @Test
     void testReverseSortedList() {
         List<Integer> list = Arrays.asList(10, 9, 8, 7, 6, 5, 4, 3, 2, 1);
-        int pivotIndex = pivotChooser.choosePivotIndex(list, 0, 9);
+        int pivotIndex = pivotChooser.getPivotIndex(list, 0, 9);
 
         assertTrue(pivotIndex >= 0 && pivotIndex <= 9);
 
@@ -200,8 +200,8 @@ public class PivotChooserTest {
         // For lists < 5, behavior should be deterministic (no randomness)
         List<Integer> list = Arrays.asList(3, 1, 4);
 
-        int firstChoice = pivotChooser.choosePivotIndex(list, 0, 2);
-        int secondChoice = pivotChooser.choosePivotIndex(list, 0, 2);
+        int firstChoice = pivotChooser.getPivotIndex(list, 0, 2);
+        int secondChoice = pivotChooser.getPivotIndex(list, 0, 2);
 
         // Should be consistent for small lists since there's no randomness
         assertEquals(firstChoice, secondChoice);
@@ -210,10 +210,10 @@ public class PivotChooserTest {
     // ===== STRING TYPE TESTS =====
     @Test
     void testStringPivotChooser() {
-        PivotChooser<String> stringChooser = new PivotChooser<>();
+        PivotChooser<String> stringChooser = new MedianOfFivePivotChooser<>();
         List<String> list = Arrays.asList("zebra", "apple", "banana", "cherry");
 
-        int pivotIndex = stringChooser.choosePivotIndex(list, 0, 3);
+        int pivotIndex = stringChooser.getPivotIndex(list, 0, 3);
         assertTrue(pivotIndex >= 0 && pivotIndex <= 3);
 
         String chosenPivot = list.get(pivotIndex);
@@ -229,7 +229,7 @@ public class PivotChooserTest {
             largeList.add(i);
         }
 
-        int pivotIndex = pivotChooser.choosePivotIndex(largeList, 0, 999);
+        int pivotIndex = pivotChooser.getPivotIndex(largeList, 0, 999);
         assertTrue(pivotIndex >= 0 && pivotIndex <= 999);
 
         Integer chosenPivot = largeList.get(pivotIndex);

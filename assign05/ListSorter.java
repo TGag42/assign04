@@ -26,10 +26,8 @@ import java.util.List;
  * all cases, while quicksort provides average O(n log n) performance with
  * excellent handling of duplicate elements through 3-way partitioning.
  *
- * @author Alex Waldmann
- * @author [Your Partner's Name if applicable]
- * @version 1.0
- * @since 2025-10-02
+ * @author Alex Waldmann && Tyler Gagliardi
+ * @version 1.0 | October 2nd, 2025 (Up-to-date)
  */
 public final class ListSorter {
 
@@ -270,7 +268,7 @@ public final class ListSorter {
             return;
         }
 
-        int pIdx = chooser.choosePivotIndex(list, left, right);
+        int pIdx = chooser.getPivotIndex(list, left, right);
         swap(list, pIdx, right);
 
         // Use 3-way partitioning to handle duplicates properly

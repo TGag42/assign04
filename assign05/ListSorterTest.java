@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
  * implementations.
  *
  * @author Alex Waldmann
- * @version October 2, 2025
+ * @version 1.0 | October 2nd, 2025 (Up-to-date)
  */
 public class ListSorterTest {
 
@@ -39,7 +39,7 @@ public class ListSorterTest {
         randomList = new ArrayList<>(Arrays.asList(5, 2, 8, 1, 9, 3, 7, 4, 6, 10));
         duplicatesList = new ArrayList<>(Arrays.asList(3, 1, 4, 1, 5, 9, 2, 6, 5, 3));
         stringList = new ArrayList<>(Arrays.asList("zebra", "apple", "banana", "cherry", "date"));
-        pivotChooser = new PivotChooser<>();
+        pivotChooser = new MedianOfFivePivotChooser<>();
     }
 
     // ===== MERGESORT TESTS =====
@@ -180,7 +180,7 @@ public class ListSorterTest {
     @Test
     void testQuicksortStrings() {
         List<String> expected = new ArrayList<>(Arrays.asList("apple", "banana", "cherry", "date", "zebra"));
-        PivotChooser<String> stringPivotChooser = new PivotChooser<>();
+        PivotChooser<String> stringPivotChooser = new MedianOfFivePivotChooser<>();
         ListSorter.quicksort(stringList, stringPivotChooser);
         assertEquals(expected, stringList);
     }
