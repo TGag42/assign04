@@ -3,29 +3,25 @@ package assign06;
 import java.util.NoSuchElementException;
 
 /**
- * A generic last-in-first-out (LIFO) stack implemented using a singly linked list
- * as the underlying data structure. Each element added is placed at the top of
- * the stack and can be removed or accessed in reverse order of insertion.
+ * A generic last-in-first-out (LIFO) stack implemented on top of a
+ * singly-linked list.
  *
- * @param <E> the type of elements stored in this stack
- * 
- * @author Tyler Gagliardi
- * @author Alex Waldmann
+ * @param <E> element type stored in the stack
  */
 public class LinkedListStack<E> implements Stack<E> {
 
-    /** The singly linked list that stores all elements in the stack. */
+    /** Backing storage for the stack; the list's head represents the stack top. */
     private final SinglyLinkedList<E> list;
 
     /**
-     * Constructs an empty stack with no elements.
+     * Constructs an empty stack.
      */
     public LinkedListStack() {
         this.list = new SinglyLinkedList<>();
     }
 
     /**
-     * Removes all elements from the stack, leaving it empty.
+     * Removes all elements from the stack.
      */
     @Override
     public void clear() {
@@ -33,9 +29,9 @@ public class LinkedListStack<E> implements Stack<E> {
     }
 
     /**
-     * Checks whether the stack is empty.
+     * Reports whether the stack contains no elements.
      *
-     * @return true if the stack contains no elements; false otherwise
+     * @return true if empty; false otherwise
      */
     @Override
     public boolean isEmpty() {
@@ -43,9 +39,9 @@ public class LinkedListStack<E> implements Stack<E> {
     }
 
     /**
-     * Retrieves, but does not remove, the element at the top of the stack.
+     * Returns, but does not remove, the element at the top of the stack.
      *
-     * @return the element currently at the top of the stack
+     * @return the top element
      * @throws NoSuchElementException if the stack is empty
      */
     @Override
@@ -54,9 +50,9 @@ public class LinkedListStack<E> implements Stack<E> {
     }
 
     /**
-     * Removes and returns the element at the top of the stack.
+     * Returns and removes the element at the top of the stack.
      *
-     * @return the element removed from the top of the stack
+     * @return the removed top element
      * @throws NoSuchElementException if the stack is empty
      */
     @Override
@@ -65,9 +61,9 @@ public class LinkedListStack<E> implements Stack<E> {
     }
 
     /**
-     * Adds an element to the top of the stack.
+     * Pushes an element onto the top of the stack.
      *
-     * @param element the element to push onto the stack
+     * @param element element to add
      */
     @Override
     public void push(E element) {
@@ -75,9 +71,9 @@ public class LinkedListStack<E> implements Stack<E> {
     }
 
     /**
-     * Returns the total number of elements currently in the stack.
+     * Returns the number of elements in the stack.
      *
-     * @return the number of elements in the stack
+     * @return current size
      */
     @Override
     public int size() {
