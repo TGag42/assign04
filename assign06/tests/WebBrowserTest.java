@@ -13,8 +13,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Comprehensive test suite for WebBrowser.
  *
- * @author Alex Waldmann
- * @author Tyler Gagliardi
+ * @author Alex Waldmann && Tyler Gagliardi
  * @version October 16, 2025
  */
 public class WebBrowserTest {
