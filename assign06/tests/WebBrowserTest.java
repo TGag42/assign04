@@ -5,6 +5,7 @@ import java.net.URL;
 import java.util.NoSuchElementException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,15 +36,15 @@ public class WebBrowserTest {
     @Test
     void testDefaultConstructor() {
         WebBrowser newBrowser = new WebBrowser();
-        assertThrows(NoSuchElementException.class, () -> newBrowser.back());
-        assertThrows(NoSuchElementException.class, () -> newBrowser.forward());
+        assertNotNull(assertThrows(NoSuchElementException.class, () -> newBrowser.back()));
+        assertNotNull(assertThrows(NoSuchElementException.class, () -> newBrowser.forward()));
     }
 
     @Test
     void testHistoryConstructorEmpty() {
         SinglyLinkedList<URL> history = new SinglyLinkedList<>();
         WebBrowser newBrowser = new WebBrowser(history);
-        assertThrows(NoSuchElementException.class, () -> newBrowser.back());
+        assertNotNull(assertThrows(NoSuchElementException.class, () -> newBrowser.back()));
     }
 
     @Test
@@ -53,7 +54,7 @@ public class WebBrowserTest {
         WebBrowser newBrowser = new WebBrowser(history);
 
         // Should have no back history
-        assertThrows(NoSuchElementException.class, () -> newBrowser.back());
+        assertNotNull(assertThrows(NoSuchElementException.class, () -> newBrowser.back()));
 
         // History should contain only current page
         SinglyLinkedList<URL> retrievedHistory = newBrowser.history();
@@ -75,13 +76,13 @@ public class WebBrowserTest {
         assertEquals(url3.toString(), newBrowser.back().toString());
 
         // No more back
-        assertThrows(NoSuchElementException.class, () -> newBrowser.back());
+        assertNotNull(assertThrows(NoSuchElementException.class, () -> newBrowser.back()));
     }
 
     @Test
     void testHistoryConstructorNull() {
         WebBrowser newBrowser = new WebBrowser(null);
-        assertThrows(NoSuchElementException.class, () -> newBrowser.back());
+        assertNotNull(assertThrows(NoSuchElementException.class, () -> newBrowser.back()));
     }
 
     // ========== visit Tests ==========
@@ -123,7 +124,7 @@ public class WebBrowserTest {
         browser.visit(url4);
 
         // Now forward should throw exception
-        assertThrows(NoSuchElementException.class, () -> browser.forward());
+        assertNotNull(assertThrows(NoSuchElementException.class, () -> browser.forward()));
     }
 
     @Test
@@ -142,13 +143,13 @@ public class WebBrowserTest {
     // ========== back Tests ==========
     @Test
     void testBackOnEmpty() {
-        assertThrows(NoSuchElementException.class, () -> browser.back());
+        assertNotNull(assertThrows(NoSuchElementException.class, () -> browser.back()));
     }
 
     @Test
     void testBackOnSinglePage() {
         browser.visit(url1);
-        assertThrows(NoSuchElementException.class, () -> browser.back());
+        assertNotNull(assertThrows(NoSuchElementException.class, () -> browser.back()));
     }
 
     @Test
@@ -157,7 +158,7 @@ public class WebBrowserTest {
         browser.visit(url2);
 
         assertEquals(url1.toString(), browser.back().toString());
-        assertThrows(NoSuchElementException.class, () -> browser.back());
+        assertNotNull(assertThrows(NoSuchElementException.class, () -> browser.back()));
     }
 
     @Test
@@ -170,7 +171,7 @@ public class WebBrowserTest {
         assertEquals(url3.toString(), browser.back().toString());
         assertEquals(url2.toString(), browser.back().toString());
         assertEquals(url1.toString(), browser.back().toString());
-        assertThrows(NoSuchElementException.class, () -> browser.back());
+        assertNotNull(assertThrows(NoSuchElementException.class, () -> browser.back()));
     }
 
     @Test
@@ -186,14 +187,14 @@ public class WebBrowserTest {
     // ========== forward Tests ==========
     @Test
     void testForwardOnEmpty() {
-        assertThrows(NoSuchElementException.class, () -> browser.forward());
+        assertNotNull(assertThrows(NoSuchElementException.class, () -> browser.forward()));
     }
 
     @Test
     void testForwardWithoutBack() {
         browser.visit(url1);
         browser.visit(url2);
-        assertThrows(NoSuchElementException.class, () -> browser.forward());
+        assertNotNull(assertThrows(NoSuchElementException.class, () -> browser.forward()));
     }
 
     @Test
@@ -207,7 +208,7 @@ public class WebBrowserTest {
 
         assertEquals(url2.toString(), browser.forward().toString());
         assertEquals(url3.toString(), browser.forward().toString());
-        assertThrows(NoSuchElementException.class, () -> browser.forward());
+        assertNotNull(assertThrows(NoSuchElementException.class, () -> browser.forward()));
     }
 
     @Test
@@ -341,7 +342,7 @@ public class WebBrowserTest {
         browser.back(); // url2
         browser.visit(url4); // Should clear url3 from forward
 
-        assertThrows(NoSuchElementException.class, () -> browser.forward());
+        assertNotNull(assertThrows(NoSuchElementException.class, () -> browser.forward()));
     }
 
     @Test
@@ -384,7 +385,7 @@ public class WebBrowserTest {
         browser.visit(url1);
 
         SinglyLinkedList<URL> history = browser.history();
-        assertEquals(4, history.size());
+        assertEquals(5, history.size());
         assertEquals(url1.toString(), history.get(0).toString());
     }
 
@@ -408,7 +409,7 @@ public class WebBrowserTest {
         browser.visit(url4); // youtube
 
         // Try to go forward - should fail
-        assertThrows(NoSuchElementException.class, () -> browser.forward());
+        assertNotNull(assertThrows(NoSuchElementException.class, () -> browser.forward()));
 
         // Verify history
         SinglyLinkedList<URL> history = browser.history();

@@ -57,8 +57,9 @@ public class WebBrowser {
         // First element becomes current page
         this.currentPage = history.getFirst();
 
-        // Remaining elements go into back stack (most recent first)
-        for (int i = 1; i < history.size(); i++) {
+        // Remaining elements go into back stack in reverse order
+        // (push from last to first, so when we pop we get them in correct order)
+        for (int i = history.size() - 1; i >= 1; i--) {
             backStack.push(history.get(i));
         }
     }
@@ -149,18 +150,16 @@ public class WebBrowser {
         // Use a temporary stack to preserve order
         Stack<URL> tempStack = new LinkedListStack<>();
 
-        // Pop all items from back stack to temp stack (reverses order)
+        // Pop all items from back stack to temp stack, adding to history as we go
         while (!backStack.isEmpty()) {
-            tempStack.push(backStack.pop());
+            URL page = backStack.pop();
+            historyList.insert(historyList.size(), page); // Add to history in correct order
+            tempStack.push(page);
         }
 
-        // Build history list and restore back stack
+        // Restore back stack from temp stack
         while (!tempStack.isEmpty()) {
-            URL page = tempStack.pop();
-            backStack.push(page);
-
-            // Insert at end of list to maintain proper order
-            historyList.insert(historyList.size(), page);
+            backStack.push(tempStack.pop());
         }
 
         return historyList;
