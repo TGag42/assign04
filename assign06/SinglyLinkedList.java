@@ -4,29 +4,35 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- * A generic singly-linked list that implements the List interface.
+ * A generic singly linked list that implements the {@code List} interface.
+ * This class maintains elements in sequential order and provides operations
+ * for insertion, deletion, retrieval, and traversal using an iterator.
  *
- * @author Tyler Gagliardi
- * @version October 2025
+ * <p>The list uses zero-based indexing, where the first element has an index of 0.</p>
+ *
+ * @param <E> the type of elements stored in this list
  * 
- * @param <E> element type
+ * @author Tyler Gagliardi
+ * @author Alex Waldmann
+ * @version October 2025
  */
 public class SinglyLinkedList<E> implements List<E> {
 
     /**
-     * Node in the singly linked list.
+     * Represents a single node within the singly linked list.
+     * Each node holds an element and a reference to the next node.
      *
-     * @param <E> element type
+     * @param <E> the type of element stored in this node
      */
     private static final class Node<E> {
         E data;
         Node<E> next;
 
         /**
-         * Creates a node.
+         * Constructs a new node with the specified element and reference to the next node.
          *
-         * @param data element stored
-         * @param next next node
+         * @param data the element stored in this node
+         * @param next the next node in the list
          */
         Node(E data, Node<E> next) {
             this.data = data;
@@ -34,14 +40,14 @@ public class SinglyLinkedList<E> implements List<E> {
         }
     }
 
-    /** First node in the list. */
+    /** Reference to the first node in the list. */
     private Node<E> head;
 
-    /** Number of elements in the list. */
+    /** The number of elements currently in the list. */
     private int size;
 
     /**
-     * Constructs an empty list.
+     * Constructs an empty singly linked list.
      */
     public SinglyLinkedList() {
         head = null;
@@ -49,9 +55,9 @@ public class SinglyLinkedList<E> implements List<E> {
     }
 
     /**
-     * Inserts an element at the beginning.
+     * Inserts a new element at the beginning of the list.
      *
-     * @param element element to insert
+     * @param element the element to insert
      */
     @Override
     public void insertFirst(E element) {
@@ -60,11 +66,11 @@ public class SinglyLinkedList<E> implements List<E> {
     }
 
     /**
-     * Inserts an element at a position.
+     * Inserts a new element at a specified position in the list.
      *
-     * @param index position to insert at (0-based, inclusive)
-     * @param element element to insert
-     * @throws IndexOutOfBoundsException if index is invalid
+     * @param index   the index at which the element should be inserted (0-based)
+     * @param element the element to insert
+     * @throws IndexOutOfBoundsException if the index is out of range
      */
     @Override
     public void insert(int index, E element) throws IndexOutOfBoundsException {
@@ -79,23 +85,24 @@ public class SinglyLinkedList<E> implements List<E> {
     }
 
     /**
-     * Returns the first element.
+     * Retrieves the first element in the list.
      *
-     * @return first element
-     * @throws NoSuchElementException if empty
+     * @return the first element
+     * @throws NoSuchElementException if the list is empty
      */
     @Override
     public E getFirst() throws NoSuchElementException {
-        if (head == null) throw new NoSuchElementException("List is empty");
+        if (head == null)
+            throw new NoSuchElementException("List is empty");
         return head.data;
     }
 
     /**
-     * Returns the element at an index.
+     * Retrieves the element at the specified index.
      *
-     * @param index index to get
-     * @return element at index
-     * @throws IndexOutOfBoundsException if index is invalid
+     * @param index the index of the element to retrieve
+     * @return the element at the given index
+     * @throws IndexOutOfBoundsException if the index is invalid
      */
     @Override
     public E get(int index) throws IndexOutOfBoundsException {
@@ -104,14 +111,15 @@ public class SinglyLinkedList<E> implements List<E> {
     }
 
     /**
-     * Deletes and returns the first element.
+     * Removes and returns the first element in the list.
      *
-     * @return removed element
-     * @throws NoSuchElementException if empty
+     * @return the removed element
+     * @throws NoSuchElementException if the list is empty
      */
     @Override
     public E deleteFirst() throws NoSuchElementException {
-        if (head == null) throw new NoSuchElementException("List is empty");
+        if (head == null)
+            throw new NoSuchElementException("List is empty");
         E val = head.data;
         head = head.next;
         size--;
@@ -119,16 +127,17 @@ public class SinglyLinkedList<E> implements List<E> {
     }
 
     /**
-     * Deletes and returns the element at an index.
+     * Removes and returns the element at the specified index.
      *
-     * @param index index to delete
-     * @return removed element
-     * @throws IndexOutOfBoundsException if index is invalid
+     * @param index the index of the element to remove
+     * @return the removed element
+     * @throws IndexOutOfBoundsException if the index is invalid
      */
     @Override
     public E delete(int index) throws IndexOutOfBoundsException {
         checkElementIndex(index);
-        if (index == 0) return deleteFirst();
+        if (index == 0)
+            return deleteFirst();
         Node<E> prev = nodeAt(index - 1);
         Node<E> target = prev.next;
         prev.next = target.next;
@@ -137,10 +146,10 @@ public class SinglyLinkedList<E> implements List<E> {
     }
 
     /**
-     * Returns the index of the first occurrence of an element.
+     * Finds the index of the first occurrence of the specified element.
      *
-     * @param element element to find
-     * @return index or -1 if not found
+     * @param element the element to search for
+     * @return the index of the element, or -1 if not found
      */
     @Override
     public int indexOf(E element) {
@@ -148,22 +157,26 @@ public class SinglyLinkedList<E> implements List<E> {
         int i = 0;
         if (element == null) {
             while (curr != null) {
-                if (curr.data == null) return i;
-                curr = curr.next; i++;
+                if (curr.data == null)
+                    return i;
+                curr = curr.next;
+                i++;
             }
         } else {
             while (curr != null) {
-                if (element.equals(curr.data)) return i;
-                curr = curr.next; i++;
+                if (element.equals(curr.data))
+                    return i;
+                curr = curr.next;
+                i++;
             }
         }
         return -1;
     }
 
     /**
-     * Returns the number of elements.
+     * Returns the number of elements in the list.
      *
-     * @return size
+     * @return the list size
      */
     @Override
     public int size() {
@@ -171,9 +184,9 @@ public class SinglyLinkedList<E> implements List<E> {
     }
 
     /**
-     * Returns whether the list is empty.
+     * Checks whether the list is empty.
      *
-     * @return true if empty
+     * @return true if the list contains no elements; false otherwise
      */
     @Override
     public boolean isEmpty() {
@@ -181,7 +194,7 @@ public class SinglyLinkedList<E> implements List<E> {
     }
 
     /**
-     * Removes all elements.
+     * Removes all elements from the list, leaving it empty.
      */
     @Override
     public void clear() {
@@ -190,9 +203,9 @@ public class SinglyLinkedList<E> implements List<E> {
     }
 
     /**
-     * Returns an array of all elements in order.
+     * Returns an array containing all elements in the list in order.
      *
-     * @return array of elements
+     * @return an array representation of the list
      */
     @Override
     public Object[] toArray() {
@@ -207,9 +220,9 @@ public class SinglyLinkedList<E> implements List<E> {
     }
 
     /**
-     * Returns an iterator over the elements from first to last.
+     * Returns an iterator that traverses the list from first to last element.
      *
-     * @return iterator
+     * @return an iterator over the elements in this list
      */
     @Override
     public Iterator<E> iterator() {
@@ -217,7 +230,8 @@ public class SinglyLinkedList<E> implements List<E> {
     }
 
     /**
-     * Iterator over the list that supports removal.
+     * Iterator implementation for the singly linked list.
+     * Provides sequential access and supports element removal during iteration.
      */
     private final class SinglyLinkedListIterator implements Iterator<E> {
         private Node<E> next = head;
@@ -227,9 +241,9 @@ public class SinglyLinkedList<E> implements List<E> {
         private boolean canRemove = false;
 
         /**
-         * Returns whether another element exists.
+         * Checks if the iteration has more elements.
          *
-         * @return true if another element is available
+         * @return true if another element exists; false otherwise
          */
         @Override
         public boolean hasNext() {
@@ -237,14 +251,15 @@ public class SinglyLinkedList<E> implements List<E> {
         }
 
         /**
-         * Returns the next element.
+         * Returns the next element in the iteration.
          *
-         * @return next element
-         * @throws NoSuchElementException if none remain
+         * @return the next element
+         * @throws NoSuchElementException if no elements remain
          */
         @Override
         public E next() {
-            if (next == null) throw new NoSuchElementException();
+            if (next == null)
+                throw new NoSuchElementException();
             lastReturnedPrev = prev;
             lastReturned = next;
             prev = next;
@@ -254,13 +269,15 @@ public class SinglyLinkedList<E> implements List<E> {
         }
 
         /**
-         * Removes the last element returned by next().
+         * Removes the last element returned by {@code next()}.
          *
-         * @throws IllegalStateException if next() not called or remove() already used
+         * @throws IllegalStateException if {@code next()} has not been called or
+         *                               {@code remove()} was already called after the last {@code next()}
          */
         @Override
         public void remove() {
-            if (!canRemove) throw new IllegalStateException();
+            if (!canRemove)
+                throw new IllegalStateException();
             if (lastReturnedPrev == null) {
                 head = lastReturned.next;
             } else {
@@ -274,10 +291,10 @@ public class SinglyLinkedList<E> implements List<E> {
     }
 
     /**
-     * Checks an index for element access (0 <= index < size).
+     * Validates an index for element access (0 ≤ index < size).
      *
-     * @param index index to check
-     * @throws IndexOutOfBoundsException if invalid
+     * @param index the index to validate
+     * @throws IndexOutOfBoundsException if the index is outside valid range
      */
     private void checkElementIndex(int index) {
         if (index < 0 || index >= size)
@@ -285,10 +302,10 @@ public class SinglyLinkedList<E> implements List<E> {
     }
 
     /**
-     * Checks an index for insertion (0 <= index <= size).
+     * Validates an index for insertion (0 ≤ index ≤ size).
      *
-     * @param index index to check
-     * @throws IndexOutOfBoundsException if invalid
+     * @param index the index to validate
+     * @throws IndexOutOfBoundsException if the index is outside valid range
      */
     private void checkPositionIndex(int index) {
         if (index < 0 || index > size)
@@ -296,14 +313,15 @@ public class SinglyLinkedList<E> implements List<E> {
     }
 
     /**
-     * Returns the node at an index.
+     * Retrieves the node at the specified index.
      *
-     * @param index index to locate
-     * @return node at index
+     * @param index the index of the node to retrieve
+     * @return the node at the specified index
      */
     private Node<E> nodeAt(int index) {
         Node<E> curr = head;
-        for (int i = 0; i < index; i++) curr = curr.next;
+        for (int i = 0; i < index; i++)
+            curr = curr.next;
         return curr;
     }
 }
