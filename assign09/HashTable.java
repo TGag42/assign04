@@ -5,31 +5,45 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * A hash table implementation of the Map<K, V> interface using separate chaining.
- * Collisions are resolved by storing entries in a linked list at each bucket.
+ * A hash table implementation of the Map<K, V> interface using separate
+ * chaining. Collisions are resolved by storing entries in a linked list at each
+ * bucket.
  *
- * Average-case behavior (assuming a good hash function):
- *  - put, get, remove, containsKey: O(1)
- *  - containsValue, keys, values, entries: O(N)
+ * Average-case behavior (assuming a good hash function): - put, get, remove,
+ * containsKey: O(1) - containsValue, keys, values, entries: O(N)
+ *
+ * @author Alex Waldmann
+ * @author Tyler Gagliardi
+ * @version November 13, 2025
  *
  * @param <K> key type
  * @param <V> value type
  */
 public class HashTable<K, V> implements Map<K, V> {
 
-    /** Backing "array" of chains. */
+    /**
+     * Backing "array" of chains.
+     */
     private ArrayList<LinkedList<MapEntry<K, V>>> table;
 
-    /** Number of key:value pairs currently stored. */
+    /**
+     * Number of key:value pairs currently stored.
+     */
     private int size;
 
-    /** Current capacity (table length). */
+    /**
+     * Current capacity (table length).
+     */
     private int capacity;
 
-    /** Maximum allowed load factor before rehashing (λ ≤ 10.0 per assignment). */
+    /**
+     * Maximum allowed load factor before rehashing (λ ≤ 10.0 per assignment).
+     */
     private static final double MAX_LOAD_FACTOR = 10.0;
 
-    /** Default initial capacity. */
+    /**
+     * Default initial capacity.
+     */
     private static final int DEFAULT_CAPACITY = 101;
 
     /**
@@ -95,8 +109,8 @@ public class HashTable<K, V> implements Map<K, V> {
      * O(N)
      *
      * @param value the value being searched for
-     * @return true if this map contains one or more keys to the specified value,
-     *         false otherwise
+     * @return true if this map contains one or more keys to the specified
+     * value, false otherwise
      */
     @Override
     public boolean containsValue(V value) {
@@ -111,8 +125,8 @@ public class HashTable<K, V> implements Map<K, V> {
     }
 
     /**
-     * Returns a list view of the mappings contained in this map, where the ordering
-     * of mappings in the list is insignificant.
+     * Returns a list view of the mappings contained in this map, where the
+     * ordering of mappings in the list is insignificant.
      *
      * O(N)
      *
@@ -133,8 +147,8 @@ public class HashTable<K, V> implements Map<K, V> {
      * Average-case: O(1)
      *
      * @param key the key for which to get the mapped value
-     * @return the value to which the specified key is mapped, or null if this map
-     *         contains no mapping for the key
+     * @return the value to which the specified key is mapped, or null if this
+     * map contains no mapping for the key
      */
     @Override
     public V get(K key) {
@@ -179,16 +193,16 @@ public class HashTable<K, V> implements Map<K, V> {
     }
 
     /**
-     * Associates the specified value with the specified key in this map. If the map
-     * previously contained a mapping for the key, the old value is replaced by the
-     * specified value.
+     * Associates the specified value with the specified key in this map. If the
+     * map previously contained a mapping for the key, the old value is replaced
+     * by the specified value.
      *
      * Average-case: O(1)
      *
-     * @param key   key with which the specified value is to be associated
+     * @param key key with which the specified value is to be associated
      * @param value value to be associated with the specified key
      * @return the previous value associated with key, or null if there was no
-     *         mapping for key
+     * mapping for key
      */
     @Override
     public V put(K key, V value) {
@@ -220,9 +234,9 @@ public class HashTable<K, V> implements Map<K, V> {
     }
 
     /**
-     * Copies all of the mappings from the specified map to this map. The effect of
-     * this call is equivalent to that of calling put(k, v) on this map once for
-     * each mapping from key k to value v in the specified map.
+     * Copies all of the mappings from the specified map to this map. The effect
+     * of this call is equivalent to that of calling put(k, v) on this map once
+     * for each mapping from key k to value v in the specified map.
      *
      * O(N)
      *
@@ -241,7 +255,7 @@ public class HashTable<K, V> implements Map<K, V> {
      *
      * @param key key whose mapping is to be removed from the map
      * @return the previous value associated with key, or null if there was no
-     *         mapping for key.
+     * mapping for key.
      */
     @Override
     public V remove(K key) {
@@ -274,8 +288,8 @@ public class HashTable<K, V> implements Map<K, V> {
     }
 
     /**
-     * Returns a list view of the values contained in this map, where the ordering
-     * of values in the list is insignificant.
+     * Returns a list view of the values contained in this map, where the
+     * ordering of values in the list is insignificant.
      *
      * O(N)
      *
@@ -291,11 +305,34 @@ public class HashTable<K, V> implements Map<K, V> {
         return result;
     }
 
+    /**
+     * Returns the number of buckets (chains) in the table. This method is
+     * useful for testing and analysis.
+     *
+     * @return the capacity of the hash table
+     */
+    public int getCapacity() {
+        return capacity;
+    }
+
+    /**
+     * Returns the bucket (chain) at the specified index. This method is useful
+     * for testing and analysis.
+     *
+     * @param index the bucket index
+     * @return the list of entries at that bucket
+     */
+    public java.util.List<MapEntry<K, V>> getBucket(int index) {
+        if (index < 0 || index >= capacity) {
+            throw new IndexOutOfBoundsException("Bucket index out of range: " + index);
+        }
+        return new java.util.ArrayList<>(table.get(index));
+    }
+
     /* ==========================
      *  Private helper methods
      * ==========================
      */
-
     /**
      * Computes the current load factor λ = size / capacity.
      */

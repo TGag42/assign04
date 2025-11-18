@@ -7,6 +7,10 @@ import java.text.DecimalFormat;
  * Object's hashCode method is overridden with a correct hash function for this
  * object, which does a reasonable (medium-quality) job of distributing students
  * in a hash table.
+ *
+ * @author Alex Waldmann
+ * @author Tyler Gagliardi
+ * @version November 13, 2025
  */
 public class StudentMediumHash {
 
@@ -42,20 +46,23 @@ public class StudentMediumHash {
 
     @Override
     public boolean equals(Object other) {
-        if (this == other)
+        if (this == other) {
             return true;
-        if (other == null || getClass() != other.getClass())
+        }
+        if (other == null || getClass() != other.getClass()) {
             return false;
+        }
 
         StudentMediumHash that = (StudentMediumHash) other;
-        return uid == that.uid &&
-               firstName.equals(that.firstName) &&
-               lastName.equals(that.lastName);
+        return uid == that.uid
+                && firstName.equals(that.firstName)
+                && lastName.equals(that.lastName);
     }
 
     /**
-     * Returns a hash code for this student that does a better job of distributing
-     * students in a hash table than StudentBadHash, but is still fairly simple.
+     * Returns a hash code for this student that does a better job of
+     * distributing students in a hash table than StudentBadHash, but is still
+     * fairly simple.
      * <p>
      * This implementation uses only the uid field. Since UIDs are well-spread
      * integers, this generally gives a decent distribution when combined with

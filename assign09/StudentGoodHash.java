@@ -6,6 +6,10 @@ import java.text.DecimalFormat;
  * This class provides a simple representation for a University of Utah student.
  * Object's hashCode method is overridden with a correct hash function for this
  * object, which does a good job of distributing students in a hash table.
+ *
+ * @author Alex Waldmann
+ * @author Tyler Gagliardi
+ * @version November 13, 2025
  */
 public class StudentGoodHash {
 
@@ -41,15 +45,17 @@ public class StudentGoodHash {
 
     @Override
     public boolean equals(Object other) {
-        if (this == other)
+        if (this == other) {
             return true;
-        if (other == null || getClass() != other.getClass())
+        }
+        if (other == null || getClass() != other.getClass()) {
             return false;
+        }
 
         StudentGoodHash that = (StudentGoodHash) other;
-        return uid == that.uid &&
-               firstName.equals(that.firstName) &&
-               lastName.equals(that.lastName);
+        return uid == that.uid
+                && firstName.equals(that.firstName)
+                && lastName.equals(that.lastName);
     }
 
     /**

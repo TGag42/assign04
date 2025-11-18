@@ -7,6 +7,10 @@ import java.text.DecimalFormat;
  * Object's hashCode method is overridden with a correct hash function for this
  * object, but one that does a poor job of distributing students in a hash
  * table.
+ *
+ * @author Alex Waldmann
+ * @author Tyler Gagliardi
+ * @version November 13, 2025
  */
 public class StudentBadHash {
 
@@ -62,20 +66,23 @@ public class StudentBadHash {
      */
     @Override
     public boolean equals(Object other) {
-        if (this == other)
+        if (this == other) {
             return true;
-        if (other == null || getClass() != other.getClass())
+        }
+        if (other == null || getClass() != other.getClass()) {
             return false;
+        }
 
         StudentBadHash that = (StudentBadHash) other;
-        return uid == that.uid &&
-               firstName.equals(that.firstName) &&
-               lastName.equals(that.lastName);
+        return uid == that.uid
+                && firstName.equals(that.firstName)
+                && lastName.equals(that.lastName);
     }
 
     /**
      * Returns a hash code for this student that satisfies the equals / hashCode
-     * contract but does a very poor job of distributing students in a hash table.
+     * contract but does a very poor job of distributing students in a hash
+     * table.
      * <p>
      * This implementation returns the same hash code for every student, which
      * forces all students into the same bucket and causes many collisions.
