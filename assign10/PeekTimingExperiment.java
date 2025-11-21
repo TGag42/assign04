@@ -45,7 +45,7 @@ public class PeekTimingExperiment extends TimingExperiment {
 
     public static void main(String[] args) {
         PeekTimingExperiment exp
-                = new PeekTimingExperiment(10, 10_000, 2.0, 5);
+                = new PeekTimingExperiment(15, 10_000, 2.0, 10);
 
         exp.warmup(10);
         exp.run();

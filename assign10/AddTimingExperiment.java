@@ -45,9 +45,9 @@ public class AddTimingExperiment extends TimingExperiment {
 
     public static void main(String[] args) {
         AddTimingExperiment exp
-                = new AddTimingExperiment(10, 10_000, 2.0, 5);
+                = new AddTimingExperiment(15, 10_000, 2.0, 10);
 
-        exp.warmup(10);
+        exp.warmup(1000);
         exp.run();
         exp.print();
     }

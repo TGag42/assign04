@@ -45,7 +45,7 @@ public class ExtractMaxTimingExperiment extends TimingExperiment {
 
     public static void main(String[] args) {
         ExtractMaxTimingExperiment exp
-                = new ExtractMaxTimingExperiment(10, 10_000, 2.0, 5);
+                = new ExtractMaxTimingExperiment(15, 10_000, 2.0, 10);
 
         exp.warmup(10);
         exp.run();
