@@ -47,8 +47,9 @@ public class FindKLargestHeapTimingExperiment extends TimingExperiment {
     public static void main(String[] args) {
         FindKLargestHeapTimingExperiment exp
                 = new FindKLargestHeapTimingExperiment(15, 10_000, 2.0, 10);
-        exp.warmup(10);
+        exp.warmup(1000);
         exp.run();
         exp.print();
     }
 }
+
