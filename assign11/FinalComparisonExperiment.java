@@ -4,7 +4,7 @@ public class FinalComparisonExperiment {
 
     public static void main(String[] args) {
         String grammarFile = args.length > 0 ? args[0] : "assign11/poetic_sentence.g";
-        int numPhrases = 1000000; // Increase to 1 million
+        int numPhrases = 1000000; // Increase to 1 million, 1 billion runs in 96,000 ms (~1.6 minutes)
 
         // Warmup
         System.out.println("Warming up...");
