@@ -18,7 +18,7 @@ javac -d target/classes assign11/*.java
 
 The `RandomPhraseGenerator` program requires two arguments:
 
-1. The path to the grammar file (from command root e.g., `assign11/poetic_sentence.g`).
+1. The path to the grammar file (from command root e.g., `poetic_sentence.g`).
 2. The number of phrases to generate (an integer).
 
 **Usage:**

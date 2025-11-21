@@ -1,9 +1,9 @@
-package comprehensive;
+package assign11;
 
 public class FinalComparisonExperiment {
 
     public static void main(String[] args) {
-        String grammarFile = "src/main/java/assign11/poetic_sentence.g";
+        String grammarFile = args.length > 0 ? args[0] : "assign11/poetic_sentence.g";
         int numPhrases = 1000000; // Increase to 1 million
 
         // Warmup
