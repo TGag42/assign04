@@ -5,26 +5,21 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 /**
- * This class conducts timing experiments to analyze the performance of the
- * RandomPhraseGenerator. It runs two experiments:
- * <ol>
- * <li>Time vs. Number of Phrases: Measures how generation time scales with the
- * number of phrases generated.</li>
- * <li>Time vs. Number of Non-Terminals: Measures how generation time scales
- * with the complexity (number of non-terminals) of the grammar.</li>
- * </ol>
+ * Timing experiments to analyze RandomPhraseGenerator performance.
  *
- * <p>
- * Results are printed in CSV format for easy graphing.
+ * Runs two experiments: 1. Time vs. number of phrases (expects O(N) growth) 2.
+ * Time vs. number of non-terminals (expects O(N) growth)
+ *
+ * Outputs results in CSV format: N,Time(ns)
  *
  * @author Alex Waldmann
  * @author Tyler Gagliardi
- * @version November 28, 2025
+ * @version December 4, 2025
  */
 public class TimingExperiment {
 
     /**
-     * Main entry point. Runs both timing experiments.
+     * Main entry point. Runs both timing experiments sequentially.
      *
      * @param args unused
      * @throws IOException if grammar file generation fails
@@ -35,39 +30,40 @@ public class TimingExperiment {
     }
 
     /**
-     * Runs Experiment 1: measures time vs. number of phrases generated. Uses a
-     * fixed grammar and varies the number of phrases.
+     * Measures time vs. number of phrases (1,000 to 20,000). Uses
+     * poetic_sentence.g with precomputed phrases.
      */
     private static void runPhrasesExperiment() {
         System.out.println("Experiment 1: Time vs Number of Phrases (N)");
         System.out.println("N,Time(ns)");
 
         String grammarFile = "./school/src/main/java/comprehensive/poetic_sentence.g";
+
         for (int n = 1000; n <= 20000; n += 1000) {
-            //Remove old unused objects
+            // Force garbage collection to minimize interference
             System.gc();
 
-            //Disable output during timing
+            // Redirect output to null during timing as we are testing algorithm
+            // scaling, any overhead should be minimized
             java.io.PrintStream originalOut = System.out;
             System.setOut(new java.io.PrintStream(new java.io.OutputStream() {
                 public void write(int b) {
                 }
             }));
 
-            //Warmup
+            // Warmup run to ensure JIT compilation
             try {
                 RandomPhraseGenerator.main(new String[]{grammarFile, "1000"});
             } catch (Exception e) {
+                // Ignore warmup errors
             }
 
-            //Begin timing
+            // Timed measurement
             long startTime = System.nanoTime();
-
-            //Generate phrases in size of n
             RandomPhraseGenerator.main(new String[]{grammarFile, String.valueOf(n)});
-
             long endTime = System.nanoTime();
 
+            // Restore output and report
             System.setOut(originalOut);
             System.out.println(n + "," + (endTime - startTime));
         }
@@ -75,57 +71,65 @@ public class TimingExperiment {
     }
 
     /**
-     * Runs Experiment 2: measures time vs. number of non-terminals. Generates
-     * synthetic chained grammars of increasing size.
+     * Measures time vs. number of non-terminals (100 to 2,000). Generates
+     * synthetic chained grammars: <start> -> <1> -> <2> -> ... -> terminal
      *
-     * @throws IOException if grammar file generation fails
+     * @throws IOException if temporary grammar file cannot be written
      */
     private static void runNonTerminalsExperiment() throws IOException {
         System.out.println("Experiment 2: Time vs Number of Non-Terminals (N)");
         System.out.println("N,Time(ns)");
 
-        int numPhrases = 100; // Constant number of phrases
+        int numPhrases = 100; // Fixed phrase count for this experiment
 
         for (int n = 100; n <= 2000; n += 100) {
+            // Force garbage collection
             System.gc();
+
+            // Generate synthetic grammar with N non-terminals
             String grammarFile = "./generated_" + n + ".g";
             generateChainedGrammar(grammarFile, n);
 
+            // Redirect output to null during timing
             java.io.PrintStream originalOut = System.out;
             System.setOut(new java.io.PrintStream(new java.io.OutputStream() {
                 public void write(int b) {
                 }
             }));
 
+            // Timed measurement
             long startTime = System.nanoTime();
-
             RandomPhraseGenerator.main(new String[]{grammarFile, String.valueOf(numPhrases)});
-
             long endTime = System.nanoTime();
-            System.setOut(originalOut);
 
+            // Restore output and report
+            System.setOut(originalOut);
             System.out.println(n + "," + (endTime - startTime));
 
-            // Cleanup
+            // Cleanup temporary grammar file
             new java.io.File(grammarFile).delete();
         }
     }
 
     /**
-     * Generates a synthetic grammar file with N chained non-terminals. The
-     * grammar forms a chain: &lt;start&gt; -&gt; &lt;1&gt; -&gt; &lt;2&gt;
-     * -&gt; ... -&gt; &lt;N&gt; -&gt; "terminal"
+     * Generates a chained grammar file: <start> -> <1> -> <2> -> ... -> <N> ->
+     * "terminal"
      *
-     * @param filename the output file path
-     * @param n the number of non-terminals in the chain
-     * @throws IOException if the file cannot be written
+     * @param filename output file path
+     * @param n number of non-terminals in the chain
+     * @throws IOException if file cannot be written
      */
     private static void generateChainedGrammar(String filename, int n) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
+            // Start symbol definition
             writer.write("{\n<start>\n<1>\n}\n");
+
+            // Chain of non-terminals: <1> -> <2> -> ... -> <N>
             for (int i = 1; i < n; i++) {
                 writer.write("{\n<" + i + ">\n<" + (i + 1) + ">\n}\n");
             }
+
+            // Final non-terminal produces terminal
             writer.write("{\n<" + n + ">\nterminal\n}\n");
         }
     }

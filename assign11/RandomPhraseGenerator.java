@@ -9,85 +9,69 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Generates random phrases based on a context-free grammar file.
- * 
- * <p>This generator reads a grammar file in a specific format and produces random
- * phrases by expanding non-terminal symbols according to production rules. The
- * grammar format uses curly braces to define non-terminals and their productions:</p>
- * 
- * <pre>
- * {
- * &lt;start&gt;
- * &lt;noun&gt; &lt;verb&gt;
- * }
- * </pre>
- * 
- * <p><b>Optimization Strategy:</b></p>
- * <p>This implementation uses a hybrid approach for maximum performance:</p>
- * <ul>
- *   <li><b>Small grammars</b> (≤100,000 possible phrases): All phrases are precomputed
- *       at parse time and stored as byte arrays. Generation becomes O(1) per phrase -
- *       just pick a random index and copy bytes to the output buffer.</li>
- *   <li><b>Large grammars</b>: Uses stack-based expansion where each phrase is generated
- *       by pushing/popping symbols onto a stack, selecting random productions for
- *       non-terminals.</li>
- * </ul>
- * 
- * <p><b>Key Performance Optimizations:</b></p>
- * <ul>
- *   <li>XorShift64 random number generator (faster than java.util.Random)</li>
- *   <li>Power-of-2 phrase array size enables bitwise AND instead of modulo</li>
- *   <li>Pre-appended newlines to phrases eliminates per-phrase newline writes</li>
- *   <li>1MB output buffer with batch writes reduces I/O system calls</li>
- *   <li>8x loop unrolling for better CPU pipelining</li>
- *   <li>Byte arrays instead of Strings avoid encoding overhead</li>
- * </ul>
+ * Random phrase generator that reads a grammar file and outputs random phrases.
+ *
+ * For small grammars, precomputes all possible phrases for fast O(1) selection.
+ * For large/recursive grammars, expands symbols one at a time using a stack.
  *
  * @author Alex Waldmann
  * @author Tyler Gagliardi
- * @version November 29, 2025
+ * @version December 4, 2025
  */
 public class RandomPhraseGenerator {
 
-    /** Maximum number of phrases to precompute before falling back to stack-based generation. */
+    /**
+     * Maximum number of phrases to precompute before falling back to
+     * stack-based generation.
+     */
     private static final int MAX_PRECOMPUTED = 100000;
-    
-    /** Newline character as a byte for direct buffer writing. */
+
+    /**
+     * Newline character as a byte for direct buffer writing.
+     */
     private static final byte NEWLINE = '\n';
 
     /**
-     * Grammar storage using integer encoding for efficiency.
-     * Structure: grammar[nonTerminalId][productionIndex][symbolIndex]
-     * 
-     * Symbol encoding:
-     * - Non-terminals: id >= 0 (index into grammar array)
-     * - Terminals: id < 0 (use ~id to get index into terminals array)
+     * Grammar storage using integer encoding for efficiency. Structure:
+     * grammar[nonTerminalId][productionIndex][symbolIndex]
+     *
+     * Symbol encoding: - Non-terminals: id >= 0 (index into grammar array) -
+     * Terminals: id < 0 (use ~id to get index into terminals array)
      */
     private static int[][][] grammar;
-    
-    /** Terminal symbols pre-encoded as byte arrays for fast output. */
-    private static byte[][] terminals;
-    
-    /** The ID of the &lt;start&gt; non-terminal symbol. */
-    private static int startSymbol;
-    
-    /**
-     * Precomputed phrases as byte arrays (includes trailing newline).
-     * Only populated if grammar produces ≤ MAX_PRECOMPUTED unique phrases.
-     * Array size is padded to power of 2 for fast modulo via bitwise AND.
-     */
-    private static byte[][] precomputedPhrases;
-    
-    /** Bitmask for fast modulo: (index & phraseMask) equals (index % precomputedPhrases.length). */
-    private static int phraseMask;
-    
-    /** Custom output stream for benchmarking (bypasses System.out when set). */
-    private static OutputStream outputStream;
 
     /**
-     * Sets a custom output stream for benchmarking purposes.
-     * When set, output goes to this stream instead of System.out.
-     * 
+     * Terminal symbols pre-encoded as byte arrays for fast output.
+     */
+    private static byte[][] terminals;
+
+    /**
+     * The ID of the &lt;start&gt; non-terminal symbol.
+     */
+    private static int startSymbol;
+
+    /**
+     * Precomputed phrases as byte arrays (includes trailing newline). Only
+     * populated if grammar produces ≤ MAX_PRECOMPUTED unique phrases. Array
+     * size is padded to power of 2 for fast modulo via bitwise AND.
+     */
+    private static byte[][] precomputedPhrases;
+
+    /**
+     * Bitmask for fast modulo: (index & phraseMask) equals (index %
+     * precomputedPhrases.length).
+     */
+    private static int phraseMask;
+
+    /**
+     * Custom output stream for benchmarking (bypasses System.out when set).
+     */
+    private static OutputStream outputStream;
+
+    // ==================== PUBLIC API ====================
+    /**
+     * Sets a custom output stream (used for benchmarking with a null stream).
+     *
      * @param out the output stream to use, or null to use System.out
      */
     public static void setOutputStream(OutputStream out) {
@@ -95,17 +79,13 @@ public class RandomPhraseGenerator {
     }
 
     /**
-     * Main entry point for the random phrase generator.
-     * 
-     * <p>Parses the grammar file, determines the optimal generation strategy,
-     * and outputs the requested number of random phrases.</p>
-     * 
-     * @param args command line arguments:
-     *             args[0] = path to grammar file
-     *             args[1] = number of phrases to generate
+     * Main entry point. Parses the grammar file and outputs random phrases.
+     *
+     * @param args args[0] = grammar file path, args[1] = number of phrases to
+     * generate
      */
     public static void main(String[] args) {
-        // Validate command line arguments
+        // ---- Argument Validation ----
         if (args.length < 2) {
             System.err.println("Usage: java RandomPhraseGenerator <grammar_file> <num_phrases>");
             return;
@@ -114,7 +94,8 @@ public class RandomPhraseGenerator {
         String grammarFile = args[0];
         int numPhrases = Integer.parseInt(args[1]);
 
-        // Parse the grammar file and attempt to precompute all phrases
+        // ---- Grammar Parsing ----
+        // parseGrammar() also calls tryPrecompute() to enumerate phrases for small grammars
         try {
             parseGrammar(grammarFile);
         } catch (IOException e) {
@@ -122,16 +103,18 @@ public class RandomPhraseGenerator {
             return;
         }
 
-        // Use custom output stream if set (for benchmarking), otherwise System.out
+        // ---- Output Stream Selection ----
+        // Use custom stream if set (for benchmarking), otherwise use standard output
         OutputStream out = (outputStream != null) ? outputStream : System.out;
 
-        // Choose generation strategy based on whether precomputation succeeded
+        // ---- Phrase Generation ----
+        // Strategy selection based on whether precomputation succeeded
         try {
             if (precomputedPhrases != null) {
-                // Fast path: O(1) per phrase using precomputed array
+                // FAST PATH: O(1) per phrase - random index lookup and byte copy
                 generateFromPrecomputed(out, numPhrases);
             } else {
-                // Fallback: O(phrase_length) per phrase using stack expansion
+                // FALLBACK PATH: O(phrase_length) per phrase - stack-based expansion
                 generateWithStack(out, numPhrases);
             }
         } catch (IOException e) {
@@ -139,212 +122,273 @@ public class RandomPhraseGenerator {
         }
     }
 
+    // ==================== GENERATION METHODS ====================
     /**
-     * Generates phrases using the precomputed phrase array.
-     * 
-     * <p>This is the fast path for small grammars. Each phrase generation is O(1):
-     * generate a random index, look up the pre-built byte array, and copy to buffer.</p>
-     * 
-     * <p><b>Optimizations:</b></p>
-     * <ul>
-     *   <li>XorShift64 PRNG: 3 XOR + shift operations per random number</li>
-     *   <li>Bitwise AND for modulo: (seed & mask) instead of (seed % length)</li>
-     *   <li>8x loop unrolling: reduces loop overhead and improves pipelining</li>
-     *   <li>Batch buffer writes: only flush when buffer approaches capacity</li>
-     * </ul>
-     * 
+     * Outputs random phrases by picking from the precomputed array (fast path).
+     *
+     * <p>
+     * Since all phrases are already built, we just pick random indices and copy
+     * the bytes to an output buffer. Uses XorShift64 for fast random numbers
+     * and processes 8 phrases at a time to reduce loop overhead.</p>
+     *
      * @param out the output stream to write phrases to
-     * @param numPhrases the number of phrases to generate
-     * @throws IOException if writing to the output stream fails
+     * @param numPhrases how many phrases to generate
+     * @throws IOException if writing fails
      */
     private static void generateFromPrecomputed(OutputStream out, int numPhrases) throws IOException {
-        // 1MB output buffer - large enough to batch many phrases between flushes
+        // ---- Buffer Setup ----
+        // 1MB buffer provides good balance between memory usage and batch efficiency.
+        // Larger buffers show diminishing returns; smaller buffers increase syscalls.
         byte[] buffer = new byte[1024 * 1024];
         int pos = 0;  // Current write position in buffer
-        int mask = phraseMask;  // Local copy for faster access
-        
-        // Initialize XorShift64 PRNG with current time as seed
+
+        // Local copy of mask for faster access (avoids repeated static field lookup)
+        int mask = phraseMask;
+
+        // ---- XorShift64 PRNG Initialization ----
+        // System.nanoTime() provides a reasonable seed with good entropy.
+        // XorShift64 has a period of 2^64-1, sufficient for any practical use.
         long seed = System.nanoTime();
-        
-        // Process phrases in groups of 8 for loop unrolling benefits
-        int groups = numPhrases >> 3;      // numPhrases / 8
-        int remainder = numPhrases & 7;     // numPhrases % 8
-        
+
+        // ---- Loop Unrolling (Incredibly optimized using bit operations and
+        // previous data coercion to make this REALLY FAST, ms for millions of phrases) ---
+        // Divide phrases into groups of 8 for unrolled processing.
+        // Using bit operations: >> 3 (2^3, right shift for devision to remove bits)
+        // equivalent to / 8, & 7 is equivalent to % 8
+        int groups = numPhrases >> 3;       // Number of complete groups of 8
+        int remainder = numPhrases & 7;     // Remaining phrases (0-7)
+
+        // ---- Main Generation Loop (8x "Unrolled") ----
+        // Very unnecessary, but improves tested speed by ~10%-20%.
+        // Basically runs multiple random generations very quickly in one
+        // iteration to reduce loop overhead. Tested with sizes 2x-16x operations,
+        // 8x was fastest in testing. This could technically be made faster with 
+        // multithreading, but for a single process this is basically
+        // as good as I could get it.
         for (int g = 0; g < groups; g++) {
-            // Generate 8 random phrase references using XorShift64 and bitwise AND
-            // XorShift64 algorithm: fast PRNG with good statistical properties
-            seed ^= (seed << 21); seed ^= (seed >>> 35); seed ^= (seed << 4);
-            byte[] p0 = precomputedPhrases[(int)(seed) & mask];
-            seed ^= (seed << 21); seed ^= (seed >>> 35); seed ^= (seed << 4);
-            byte[] p1 = precomputedPhrases[(int)(seed) & mask];
-            seed ^= (seed << 21); seed ^= (seed >>> 35); seed ^= (seed << 4);
-            byte[] p2 = precomputedPhrases[(int)(seed) & mask];
-            seed ^= (seed << 21); seed ^= (seed >>> 35); seed ^= (seed << 4);
-            byte[] p3 = precomputedPhrases[(int)(seed) & mask];
-            seed ^= (seed << 21); seed ^= (seed >>> 35); seed ^= (seed << 4);
-            byte[] p4 = precomputedPhrases[(int)(seed) & mask];
-            seed ^= (seed << 21); seed ^= (seed >>> 35); seed ^= (seed << 4);
-            byte[] p5 = precomputedPhrases[(int)(seed) & mask];
-            seed ^= (seed << 21); seed ^= (seed >>> 35); seed ^= (seed << 4);
-            byte[] p6 = precomputedPhrases[(int)(seed) & mask];
-            seed ^= (seed << 21); seed ^= (seed >>> 35); seed ^= (seed << 4);
-            byte[] p7 = precomputedPhrases[(int)(seed) & mask];
-            
-            // Calculate total bytes needed for this group of 8 phrases
-            int needed = p0.length + p1.length + p2.length + p3.length + 
-                         p4.length + p5.length + p6.length + p7.length;
-            
-            // Flush buffer if it can't hold this group
+            // Generate 8 random phrase references using XorShift64.
+            // Each XorShift64 step: 3 XOR operations with specific shift amounts.
+            // The shift values (21, 35, 4) are from Marsaglia's recommended parameters.
+
+            // Xorshift64 with validated shift constants (21, 35, 4) chosen to maximize period
+            // and ensure good bit diffusion so all bits mix well and avoid RNG bias. (chatgpt.com)
+            seed ^= (seed << 21);
+            seed ^= (seed >>> 35);
+            seed ^= (seed << 4);
+            byte[] p0 = precomputedPhrases[(int) (seed) & mask];
+            seed ^= (seed << 21);
+            seed ^= (seed >>> 35);
+            seed ^= (seed << 4);
+            byte[] p1 = precomputedPhrases[(int) (seed) & mask];
+            seed ^= (seed << 21);
+            seed ^= (seed >>> 35);
+            seed ^= (seed << 4);
+            byte[] p2 = precomputedPhrases[(int) (seed) & mask];
+            seed ^= (seed << 21);
+            seed ^= (seed >>> 35);
+            seed ^= (seed << 4);
+            byte[] p3 = precomputedPhrases[(int) (seed) & mask];
+            seed ^= (seed << 21);
+            seed ^= (seed >>> 35);
+            seed ^= (seed << 4);
+            byte[] p4 = precomputedPhrases[(int) (seed) & mask];
+            seed ^= (seed << 21);
+            seed ^= (seed >>> 35);
+            seed ^= (seed << 4);
+            byte[] p5 = precomputedPhrases[(int) (seed) & mask];
+            seed ^= (seed << 21);
+            seed ^= (seed >>> 35);
+            seed ^= (seed << 4);
+            byte[] p6 = precomputedPhrases[(int) (seed) & mask];
+            seed ^= (seed << 21);
+            seed ^= (seed >>> 35);
+            seed ^= (seed << 4);
+            byte[] p7 = precomputedPhrases[(int) (seed) & mask];
+
+            // Calculate total bytes needed for this group of 8 phrases.
+            // This check prevents buffer overflow when phrases are large.
+            int needed = p0.length + p1.length + p2.length + p3.length
+                    + p4.length + p5.length + p6.length + p7.length;
+
+            // Flush buffer if it cannot hold this group
             if (pos + needed > buffer.length) {
                 out.write(buffer, 0, pos);
                 pos = 0;
             }
-            
-            // Copy all 8 phrases to buffer (newlines already included in phrases)
-            System.arraycopy(p0, 0, buffer, pos, p0.length); pos += p0.length;
-            System.arraycopy(p1, 0, buffer, pos, p1.length); pos += p1.length;
-            System.arraycopy(p2, 0, buffer, pos, p2.length); pos += p2.length;
-            System.arraycopy(p3, 0, buffer, pos, p3.length); pos += p3.length;
-            System.arraycopy(p4, 0, buffer, pos, p4.length); pos += p4.length;
-            System.arraycopy(p5, 0, buffer, pos, p5.length); pos += p5.length;
-            System.arraycopy(p6, 0, buffer, pos, p6.length); pos += p6.length;
-            System.arraycopy(p7, 0, buffer, pos, p7.length); pos += p7.length;
+
+            // Copy all 8 phrases to buffer using System.arraycopy (native memcpy).
+            // Newlines are pre-appended to each phrase, so no separate newline writes.
+            System.arraycopy(p0, 0, buffer, pos, p0.length);
+            pos += p0.length;
+            System.arraycopy(p1, 0, buffer, pos, p1.length);
+            pos += p1.length;
+            System.arraycopy(p2, 0, buffer, pos, p2.length);
+            pos += p2.length;
+            System.arraycopy(p3, 0, buffer, pos, p3.length);
+            pos += p3.length;
+            System.arraycopy(p4, 0, buffer, pos, p4.length);
+            pos += p4.length;
+            System.arraycopy(p5, 0, buffer, pos, p5.length);
+            pos += p5.length;
+            System.arraycopy(p6, 0, buffer, pos, p6.length);
+            pos += p6.length;
+            System.arraycopy(p7, 0, buffer, pos, p7.length);
+            pos += p7.length;
         }
-        
-        // Handle remaining phrases (0-7) that don't fit in a full group
+
+        // ---- Handle Remaining Phrases ----
+        // Process any phrases that don't fit in a complete group of 8
         for (int i = 0; i < remainder; i++) {
-            // Generate random index using XorShift64
+            // XorShift64 step (same algorithm as above)
             seed ^= (seed << 21);
             seed ^= (seed >>> 35);
             seed ^= (seed << 4);
-            
-            byte[] phrase = precomputedPhrases[(int)(seed) & mask];
-            
-            // Flush if needed before copying
+
+            byte[] phrase = precomputedPhrases[(int) (seed) & mask];
+
+            // Flush buffer if needed before copying
             if (pos + phrase.length > buffer.length) {
                 out.write(buffer, 0, pos);
                 pos = 0;
             }
-            
+
             System.arraycopy(phrase, 0, buffer, pos, phrase.length);
             pos += phrase.length;
         }
-        
-        // Flush any remaining data in buffer
+
+        // ---- Final Flush ----
+        // Write any remaining data in the buffer
         if (pos > 0) {
             out.write(buffer, 0, pos);
         }
     }
 
     /**
-     * Generates phrases using stack-based grammar expansion.
-     * 
-     * <p>This is the fallback path for large grammars where precomputation is not
-     * feasible. Each phrase is generated by:</p>
-     * <ol>
-     *   <li>Push the start symbol onto the stack</li>
-     *   <li>Pop a symbol; if terminal, output it; if non-terminal, pick a random
-     *       production and push its symbols in reverse order</li>
-     *   <li>Repeat until stack is empty</li>
-     * </ol>
-     * 
+     * Generates phrases by expanding the grammar one symbol at a time (fallback
+     * path).
+     *
+     * <p>
+     * Used when precomputation isn't possible (grammar too large or recursive).
+     * Uses a stack to expand non-terminals: pop a symbol, if it's a
+     * non-terminal pick a random production and push its symbols, if it's a
+     * terminal write it out.</p>
+     *
      * @param out the output stream to write phrases to
-     * @param numPhrases the number of phrases to generate
-     * @throws IOException if writing to the output stream fails
+     * @param numPhrases how many phrases to generate
+     * @throws IOException if writing fails
      */
     private static void generateWithStack(OutputStream out, int numPhrases) throws IOException {
-        // 1MB output buffer for batching writes
+        // ---- Buffer Setup ----
+        // Same 1MB buffer strategy as the precomputed path
         byte[] buffer = new byte[1024 * 1024];
         int pos = 0;
-        
-        // Stack for grammar expansion (256 should be enough for most grammars)
+
+        // ---- Stack Setup ----
+        // 256 should be sufficient for most grammars. Deep recursion would have
+        // been caught during precomputation attempt (depth > 50 throws exception).
         int[] stack = new int[256];
-        
-        // Initialize XorShift64 PRNG
+
+        // ---- XorShift64 "RNG" ----
         long seed = System.nanoTime();
 
+        // ---- Main Generation Loop ----
         for (int i = 0; i < numPhrases; i++) {
-            // Start expansion with the start symbol
+            // Initialize stack with start symbol
             int top = 0;
+
             stack[top++] = startSymbol;
 
-            // Expand until no symbols remain
+            // Expand symbols until stack is empty (phrase complete)
             while (top > 0) {
                 int symbol = stack[--top];
 
                 if (symbol < 0) {
-                    // Terminal symbol: copy its bytes to buffer
-                    byte[] term = terminals[~symbol];  // ~symbol converts negative ID to array index
+                    // ---- Terminal Symbol ----
+                    // Negative IDs indicate terminals. Use bitwise NOT to get array index.
+                    byte[] term = terminals[~symbol];
                     int len = term.length;
-                    
+
                     // Flush buffer if needed
                     if (pos + len > buffer.length) {
                         out.write(buffer, 0, pos);
                         pos = 0;
                     }
-                    
+
+                    // Copy terminal bytes to output buffer
                     System.arraycopy(term, 0, buffer, pos, len);
                     pos += len;
                 } else {
-                    // Non-terminal symbol: pick random production and push symbols
+                    // ---- Non-Terminal Symbol ----
+                    // Get all productions for this non-terminal
                     int[][] productions = grammar[symbol];
-                    
+
                     // Generate random production index using XorShift64
                     seed ^= (seed << 21);
                     seed ^= (seed >>> 35);
                     seed ^= (seed << 4);
-                    
-                    // Use modulo for production selection (not power of 2)
-                    int[] production = productions[(int)((seed & 0x7FFFFFFFL) % productions.length)];
-                    
-                    // Push symbols in reverse order so they pop in correct order
+
+                    // Select random production, pseudo rng for speed. Using 
+                    // (seed & 0x7FFFFFFFL) ensures positive value for modulo. 
+                    // Basically masks off sign bit. (Thanks AI).
+                    int[] production = productions[(int) ((seed & 0x7FFFFFFFL) % productions.length)];
+
+                    // Push symbols in REVERSE order so they pop in correct (left-to-right) order
                     for (int j = production.length - 1; j >= 0; j--) {
                         stack[top++] = production[j];
                     }
                 }
             }
-            
-            // Add newline after each phrase
+
+            // ---- Append Newline ----
+            // Unlike precomputed phrases, stack-generated phrases don't include newlines
             if (pos >= buffer.length - 1) {
                 out.write(buffer, 0, pos);
                 pos = 0;
             }
             buffer[pos++] = NEWLINE;
         }
-        
-        // Flush any remaining data
+
+        // ---- Final Flush ----
         if (pos > 0) {
             out.write(buffer, 0, pos);
         }
     }
 
+    // ==================== PRECOMPUTATION METHODS ====================
     /**
-     * Attempts to precompute all possible phrases from the grammar.
-     * 
-     * <p>If the grammar produces a small number of unique phrases (≤ MAX_PRECOMPUTED),
-     * this method enumerates all of them and stores them as byte arrays with newlines
-     * already appended. The array is padded to a power of 2 to enable fast modulo
-     * operations using bitwise AND.</p>
-     * 
-     * <p>If the grammar is too large (too many phrases or too deep recursion),
-     * precomputation is abandoned and the generator falls back to stack-based expansion.</p>
+     * Tries to build a list of all possible phrases from the grammar.
+     *
+     * <p>
+     * If the grammar is small enough (≤100,000 phrases and not deeply
+     * recursive), we store all phrases in an array for fast random selection.
+     * The array is padded to a power-of-2 size so we can use bitwise AND for
+     * speed instead of modulous for the indexing.</p>
+     *
+     * <p>
+     * If the grammar is too large or recursive, this sets precomputedPhrases to
+     * null and we fall back to generating phrases one at a time.</p>
      */
     private static void tryPrecompute() {
         try {
-            // Recursively expand all possible phrases from the start symbol
+            // Recursively enumerate all possible phrases starting from <start>
             ArrayList<byte[]> phrases = expand(startSymbol, 0);
-            
+
             if (phrases.size() <= MAX_PRECOMPUTED) {
                 int size = phrases.size();
-                
-                // Find next power of 2 >= size for fast modulo via bitwise AND
+
+                // ---- Power-of-2 Array Sizing ----
+                // Find smallest power of 2 >= size
+                // Example: size=21 -> highestOneBit=16 -> powerOf2=32
                 int powerOf2 = Integer.highestOneBit(size);
-                if (powerOf2 < size) powerOf2 <<= 1;
-                
+                if (powerOf2 < size) {
+                    powerOf2 <<= 1;
+                }
+
                 precomputedPhrases = new byte[powerOf2][];
-                phraseMask = powerOf2 - 1;  // Mask for bitwise AND modulo
-                
-                // Convert phrases to byte arrays with newlines appended
+                phraseMask = powerOf2 - 1;  // Bitmask for fast modulo
+
+                // ---- Append Newlines ----
+                // Pre-append newline to each phrase to eliminate per-phrase newline writes
                 for (int i = 0; i < size; i++) {
                     byte[] orig = phrases.get(i);
                     byte[] withNewline = new byte[orig.length + 1];
@@ -352,63 +396,80 @@ public class RandomPhraseGenerator {
                     withNewline[orig.length] = NEWLINE;
                     precomputedPhrases[i] = withNewline;
                 }
-                
-                // Fill padding slots by cycling through existing phrases
-                // This ensures all array indices are valid
+
+                // ---- Fill Padding Slots ----
+                // Cycle through existing phrases to fill remaining slots.
+                // This ensures all array indices are valid and maintains
+                // mostly uniform distribution (a few items may repeat).
                 for (int i = size; i < powerOf2; i++) {
                     precomputedPhrases[i] = precomputedPhrases[i % size];
                 }
             }
         } catch (RuntimeException e) {
-            // Grammar too large (too many phrases or too deep) - use stack-based generation
+            // Grammar too large or too deeply recursive - fall back to stack generation
             precomputedPhrases = null;
         }
     }
 
     /**
-     * Recursively expands a grammar symbol into all possible byte array outputs.
-     * 
-     * <p>For terminals, returns a single-element list containing the terminal's bytes.
-     * For non-terminals, returns the Cartesian product of all productions' expansions.</p>
-     * 
-     * @param symbol the symbol to expand (>= 0 for non-terminal, < 0 for terminal)
-     * @param depth current recursion depth (for cycle detection)
-     * @return list of all possible byte array outputs for this symbol
-     * @throws RuntimeException if recursion is too deep or too many phrases generated
+     * Builds a list of all possible phrases that can be generated from a
+     * symbol.
+     *
+     * <p>
+     * For terminals, just returns that terminal. For non-terminals, tries every
+     * production and every combination of expansions within each
+     * production.</p>
+     *
+     * <p>
+     * <b>Example:</b> If {@code <A>} can produce "X" followed by {@code <B>},
+     * and {@code <B>} can be "Y" or "Z", then expanding {@code <A>} gives
+     * ["XY", "XZ"].</p>
+     *
+     * @param symbol the symbol to expand (non-negative = non-terminal, negative
+     * = terminal)
+     * @param depth current recursion depth (stops at 50 to prevent infinite
+     * loops)
+     * @return list of all possible phrases from this symbol
+     * @throws RuntimeException if too deep or too many phrases
      */
     private static ArrayList<byte[]> expand(int symbol, int depth) {
-        // Prevent infinite recursion from cyclic grammars
-        if (depth > 50) throw new RuntimeException("Too deep");
+        // Recursion depth limit prevents infinite loops from cyclic grammars
+        // and bounds the expansion time for deeply nested grammars
+        if (depth > 50) {
+            throw new RuntimeException("Too deep");
+        }
 
         ArrayList<byte[]> results = new ArrayList<>();
 
         if (symbol < 0) {
-            // Terminal: return its byte representation
+            // ---- Terminal Symbol ----
+            // Return single-element list with the terminal's byte representation
             results.add(terminals[~symbol]);
             return results;
         }
 
-        // Non-terminal: expand each production and collect all results
+        // ---- Non-Terminal Symbol ----
+        // Enumerate all phrases for each production
         for (int[] production : grammar[symbol]) {
-            // Start with empty prefix
+            // Start with empty prefix (will accumulate symbols left-to-right)
             ArrayList<byte[]> current = new ArrayList<>();
             current.add(new byte[0]);
 
-            // For each symbol in production, expand and combine with current prefixes
+            // For each symbol in production, compute all possible expansions
             for (int s : production) {
                 ArrayList<byte[]> expansions = expand(s, depth + 1);
                 ArrayList<byte[]> next = new ArrayList<>();
-                
-                // Cartesian product: combine each prefix with each expansion
+
+                // All phrases: combine each current prefix with each expansion
                 for (byte[] prefix : current) {
                     for (byte[] suffix : expansions) {
-                        // Concatenate prefix and suffix
+                        // Concatenate prefix and suffix into new byte array
                         byte[] combined = new byte[prefix.length + suffix.length];
                         System.arraycopy(prefix, 0, combined, 0, prefix.length);
                         System.arraycopy(suffix, 0, combined, prefix.length, suffix.length);
                         next.add(combined);
-                        
-                        // Bail out if too many phrases
+
+                        // Early termination if too many phrases
                         if (next.size() > MAX_PRECOMPUTED) {
                             throw new RuntimeException("Too many phrases");
                         }
@@ -416,53 +477,53 @@ public class RandomPhraseGenerator {
                 }
                 current = next;
             }
-            
+
+            // Add all phrases from this production to results
             results.addAll(current);
             if (results.size() > MAX_PRECOMPUTED) {
                 throw new RuntimeException("Too many phrases");
             }
         }
-        
+
         return results;
     }
 
+    // ==================== GRAMMAR PARSING METHODS ====================
     /**
-     * Parses a grammar file and initializes all static data structures.
-     * 
-     * <p>Grammar file format:</p>
-     * <pre>
-     * {
-     * &lt;non-terminal-name&gt;
-     * production1
-     * production2
-     * ...
-     * }
-     * </pre>
-     * 
-     * <p>Productions can contain terminals (literal text) and non-terminals
-     * (enclosed in angle brackets like &lt;name&gt;).</p>
-     * 
+     * Reads a grammar file and sets up all data structures.
+     *
+     * <p>
+     * After parsing, tries to precompute all phrases if the grammar is small
+     * enough.
+     * </p>
+     *
      * @param filePath path to the grammar file
      * @throws IOException if the file cannot be read
      */
     private static void parseGrammar(String filePath) throws IOException {
-        // Maps for assigning IDs to symbols
+        // ---- Symbol Mapping Structures ----
+        // Maps symbol names to integer IDs for efficient encoding
         Map<String, Integer> nonTerminalMap = new HashMap<>();
         ArrayList<byte[]> terminalList = new ArrayList<>();
         Map<String, Integer> terminalMap = new HashMap<>();
-        
-        // Builder for constructing grammar array
+
+        // Builder for grammar - will be converted to primitive array after parsing
         ArrayList<ArrayList<int[]>> grammarBuilder = new ArrayList<>();
 
+        // ---- File Parsing ----
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = br.readLine()) != null) {
-                // Look for start of non-terminal definition
-                if (line.isEmpty() || line.charAt(0) != '{') continue;
+                // Look for start of non-terminal definition (line starting with '{')
+                if (line.isEmpty() || line.charAt(0) != '{') {
+                    continue;
+                }
 
-                // Read non-terminal name
+                // Next line contains the non-terminal name
                 String ntName = br.readLine();
-                if (ntName == null) break;
+                if (ntName == null) {
+                    break;
+                }
 
                 // Get or create ID for this non-terminal
                 int ntId = getNonTerminalId(ntName, nonTerminalMap, grammarBuilder);
@@ -471,41 +532,44 @@ public class RandomPhraseGenerator {
                 // Read all productions until closing brace
                 while ((line = br.readLine()) != null && !line.startsWith("}")) {
                     if (!line.isEmpty()) {
-                        productions.add(parseProduction(line, nonTerminalMap, 
-                                                         terminalList, terminalMap, grammarBuilder));
+                        // Parse production and add to this non-terminal's production list
+                        productions.add(parseProduction(line, nonTerminalMap,
+                                terminalList, terminalMap, grammarBuilder));
                     }
                 }
             }
         }
 
-        // Convert ArrayLists to arrays for faster access
+        // ---- Convert to Primitive Arrays ----
+        // ArrayLists have object overhead; primitive arrays are faster to traverse
         grammar = new int[grammarBuilder.size()][][];
         for (int i = 0; i < grammarBuilder.size(); i++) {
             ArrayList<int[]> prods = grammarBuilder.get(i);
             grammar[i] = prods.toArray(new int[prods.size()][]);
         }
-        
+
         terminals = terminalList.toArray(new byte[0][]);
+
+        // Look up the start symbol (grammar must define <start>)
         startSymbol = nonTerminalMap.get("<start>");
-        
-        // Attempt to precompute all phrases for small grammars
+
+        // ---- Attempt Precomputation ----
+        // If successful, enables O(1) generation; otherwise falls back to stack-based
         tryPrecompute();
     }
 
     /**
-     * Gets or creates an ID for a non-terminal symbol.
-     * 
-     * @param name the non-terminal name (e.g., "&lt;start&gt;")
-     * @param map the name-to-ID mapping
-     * @param builder the grammar builder to add new entries to
-     * @return the ID for this non-terminal
+     * Gets or creates an ID for a non-terminal (like {@code <start>}). IDs are
+     * non-negative and used as indices into the grammar array.
      */
-    private static int getNonTerminalId(String name, Map<String, Integer> map, 
-                                         ArrayList<ArrayList<int[]>> builder) {
+    private static int getNonTerminalId(String name, Map<String, Integer> map,
+            ArrayList<ArrayList<int[]>> builder) {
         Integer id = map.get(name);
-        if (id != null) return id;
-        
-        // Assign new ID and create production list
+        if (id != null) {
+            return id;
+        }
+
+        // Assign new ID (next available index) and create empty production list
         id = map.size();
         map.put(name, id);
         builder.add(new ArrayList<>());
@@ -513,72 +577,60 @@ public class RandomPhraseGenerator {
     }
 
     /**
-     * Gets or creates an ID for a terminal symbol.
-     * 
-     * <p>Terminal IDs are encoded as negative numbers: the actual array index
-     * is obtained using bitwise NOT (~id).</p>
-     * 
-     * @param value the terminal string value
-     * @param list the list of terminal byte arrays
-     * @param map the value-to-ID mapping
-     * @return the encoded ID for this terminal (negative number)
+     * Gets or creates an ID for a terminal (literal text like "hello").
+     * Terminal IDs are negative (encoded with ~) to distinguish from
+     * non-terminals.
      */
     private static int getTerminalId(String value, ArrayList<byte[]> list, Map<String, Integer> map) {
         Integer id = map.get(value);
-        if (id != null) return id;
-        
-        // Assign new index and store byte array
+        if (id != null) {
+            return id;
+        }
+
+        // Assign new index and store byte array representation
         int index = list.size();
-        list.add(value.getBytes());
+        list.add(value.getBytes());  // Pre-encode as bytes for fast output
         id = ~index;  // Encode as negative using bitwise NOT
         map.put(value, id);
         return id;
     }
 
     /**
-     * Parses a production rule into an array of symbol IDs.
-     * 
-     * <p>Scans the line for non-terminals (text between &lt; and &gt;) and
-     * terminals (everything else). Each symbol is assigned an ID.</p>
-     * 
-     * @param line the production rule text
-     * @param ntMap non-terminal name-to-ID map
-     * @param termList list of terminal byte arrays
-     * @param termMap terminal value-to-ID map
-     * @param builder grammar builder for creating new non-terminals
-     * @return array of symbol IDs representing this production
+     * Parses a production line into an array of symbol IDs. Splits on angle
+     * brackets: text in {@code <...>} becomes non-terminals, everything else
+     * becomes terminals.
      */
     private static int[] parseProduction(String line, Map<String, Integer> ntMap,
-                                          ArrayList<byte[]> termList, Map<String, Integer> termMap,
-                                          ArrayList<ArrayList<int[]>> builder) {
+            ArrayList<byte[]> termList, Map<String, Integer> termMap,
+            ArrayList<ArrayList<int[]>> builder) {
         ArrayList<Integer> symbols = new ArrayList<>();
         int i = 0;
-        
+
         while (i < line.length()) {
             // Find next non-terminal (starts with '<')
             int open = line.indexOf('<', i);
-            
+
             if (open == -1) {
-                // No more non-terminals; rest of line is terminal
+                // No more non-terminals; rest of line is terminal text
                 if (i < line.length()) {
                     symbols.add(getTerminalId(line.substring(i), termList, termMap));
                 }
                 break;
             }
-            
-            // Text before '<' is a terminal
+
+            // Text before '<' is terminal
             if (open > i) {
                 symbols.add(getTerminalId(line.substring(i, open), termList, termMap));
             }
-            
+
             // Extract non-terminal name (including angle brackets)
             int close = line.indexOf('>', open);
             String ntName = line.substring(open, close + 1);
             symbols.add(getNonTerminalId(ntName, ntMap, builder));
             i = close + 1;
         }
-        
-        // Convert ArrayList to primitive array
+
+        // Convert ArrayList<Integer> to int[] for performance
         int[] result = new int[symbols.size()];
         for (int j = 0; j < symbols.size(); j++) {
             result[j] = symbols.get(j);
